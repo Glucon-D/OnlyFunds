@@ -20,7 +20,7 @@ import {
 } from '../utils/localDb';
 import { generateId } from '../utils/helpers';
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
+export const useAuthStore = create<AuthStore>((set) => ({
   // Initial state
   user: null,
   isLoggedIn: false,

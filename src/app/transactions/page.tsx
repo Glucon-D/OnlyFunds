@@ -19,7 +19,7 @@ import { ExpenseForm } from '@/components/expenses/ExpenseForm';
 export default function TransactionsPage() {
   const router = useRouter();
   const { user, isLoggedIn, isLoading } = useAuthStore();
-  const { fetchTransactions } = useExpenseStore();
+  const { fetchTransactions, transactions } = useExpenseStore();
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
   useEffect(() => {
@@ -51,22 +51,43 @@ export default function TransactionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Transactions
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            View and manage all your income and expense transactions
-          </p>
+      {/* Enhanced Page Header */}
+      <div className="mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+          <div className="flex items-center mb-4 lg:mb-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-1">
+                Transaction History
+              </h1>
+              <p className="text-slate-600 dark:text-slate-300">
+                Track all your income and expenses with detailed categorization
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Total Transactions</p>
+              <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                {transactions.length}
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowExpenseForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
+              size="lg"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Transaction
+            </Button>
+          </div>
         </div>
-        <Button 
-          onClick={() => setShowExpenseForm(true)}
-          className="mt-4 sm:mt-0"
-        >
-          Add Transaction
-        </Button>
       </div>
 
       {/* Transaction List */}

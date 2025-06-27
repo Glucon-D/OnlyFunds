@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { useExpenseStore, useAuthStore } from '@/lib/zustand';
 import { TransactionType, ExpenseCategory, IncomeCategory } from '@/lib/types';
-import { transactionFormSchema, type TransactionFormData } from '@/lib/utils/validation';
+import { transactionFormSchema } from '@/lib/utils/validation';
 import { getExpenseCategories, getIncomeCategories, formatDateInput } from '@/lib/utils/helpers';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -67,11 +67,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, onCancel })
       transactionFormSchema.parse(formData);
       setErrors({});
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const fieldErrors: Record<string, string> = {};
-      
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        (error as { errors: Array<{ path?: string[]; message: string }> }).errors.forEach((err) => {
           if (err.path && err.path[0]) {
             fieldErrors[err.path[0]] = err.message;
           }
