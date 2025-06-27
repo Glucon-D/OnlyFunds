@@ -48,11 +48,11 @@ export const SignupForm: React.FC = () => {
       signupSchema.parse(formData);
       setErrors({});
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const fieldErrors: Partial<SignupFormData> = {};
-      
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        (error as { errors: Array<{ path?: string[]; message: string }> }).errors.forEach((err) => {
           if (err.path && err.path[0]) {
             fieldErrors[err.path[0] as keyof SignupFormData] = err.message;
           }

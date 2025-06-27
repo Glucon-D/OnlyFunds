@@ -70,7 +70,7 @@ export default function DashboardPage() {
           Welcome back, {user?.username}!
         </h1>
         <p className="text-slate-600 dark:text-slate-300">
-          Here's your financial overview for {monthNames[currentMonth - 1]} {currentYear}
+          Here&apos;s your financial overview for {monthNames[currentMonth - 1]} {currentYear}
         </p>
       </div>
 

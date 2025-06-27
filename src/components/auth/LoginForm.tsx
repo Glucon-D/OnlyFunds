@@ -46,11 +46,11 @@ export const LoginForm: React.FC = () => {
       loginSchema.parse(formData);
       setErrors({});
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const fieldErrors: Partial<LoginFormData> = {};
-      
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        (error as { errors: Array<{ path?: string[]; message: string }> }).errors.forEach((err) => {
           if (err.path && err.path[0]) {
             fieldErrors[err.path[0] as keyof LoginFormData] = err.message;
           }
@@ -131,7 +131,7 @@ export const LoginForm: React.FC = () => {
           </Button>
 
           <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <button
               type="button"
               onClick={() => router.push('/signup')}

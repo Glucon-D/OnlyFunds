@@ -11,8 +11,7 @@
 
 import React, { useState } from 'react';
 import { useBudgetStore, useAuthStore } from '@/lib/zustand';
-import { ExpenseCategory } from '@/lib/types';
-import { budgetFormSchema, type BudgetFormData } from '@/lib/utils/validation';
+import { budgetFormSchema } from '@/lib/utils/validation';
 import { getExpenseCategories, getMonthOptions, getYearOptions, getCurrentMonth, getCurrentYear } from '@/lib/utils/helpers';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -52,11 +51,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
       budgetFormSchema.parse(formData);
       setErrors({});
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const fieldErrors: Record<string, string> = {};
-      
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        (error as { errors: Array<{ path?: string[]; message: string }> }).errors.forEach((err) => {
           if (err.path && err.path[0]) {
             fieldErrors[err.path[0]] = err.message;
           }

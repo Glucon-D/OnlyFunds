@@ -8,7 +8,7 @@
  */
 
 import { useAuthStore, useExpenseStore, useBudgetStore } from '../zustand';
-import { Transaction, Budget, ExpenseCategory, IncomeCategory, TransactionType } from '../types';
+import { Transaction, Budget } from '../types';
 
 // Enhanced expense store with user context
 export const useExpenseStoreWithAuth = () => {

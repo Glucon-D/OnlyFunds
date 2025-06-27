@@ -8,7 +8,7 @@
  */
 
 import { create } from 'zustand';
-import { BudgetStore, Budget, BudgetProgress, ExpenseCategory, TransactionType } from '../types';
+import { BudgetStore, Budget, BudgetProgress, ExpenseCategory, TransactionType, Transaction } from '../types';
 import { 
   getBudgetsByUserId, 
   addBudget as addBudgetToDb, 
@@ -135,7 +135,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
     }
   },
 
-  calculateBudgetProgress: (transactions: any[] = [], month?: number, year?: number) => {
+  calculateBudgetProgress: (transactions: Transaction[] = [], month?: number, year?: number) => {
     const { budgets } = get();
 
     const targetMonth = month || getCurrentMonth();
@@ -145,7 +145,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
     let transactionsToUse = transactions;
     if (transactions.length === 0 && typeof window !== 'undefined') {
       // Get transactions from expense store if available
-      const expenseStore = (window as any).__expenseStore;
+      const expenseStore = (window as unknown as { __expenseStore?: { getState: () => { transactions: Transaction[] } } }).__expenseStore;
       if (expenseStore && expenseStore.getState) {
         transactionsToUse = expenseStore.getState().transactions || [];
       }
@@ -156,7 +156,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
       .map(budget => {
         // Calculate spent amount for this category in the target month/year
         const spentAmount = transactionsToUse
-          .filter((t: any) => {
+          .filter((t: Transaction) => {
             const transactionDate = new Date(t.date);
             return (
               t.type === TransactionType.EXPENSE &&
@@ -165,7 +165,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
               transactionDate.getFullYear() === targetYear
             );
           })
-          .reduce((total: number, t: any) => total + t.amount, 0);
+          .reduce((total: number, t: Transaction) => total + t.amount, 0);
 
         const remainingAmount = budget.amount - spentAmount;
         const percentageUsed = budget.amount > 0 ? Math.round((spentAmount / budget.amount) * 100) : 0;

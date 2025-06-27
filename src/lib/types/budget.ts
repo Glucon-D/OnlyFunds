@@ -6,7 +6,7 @@
  * Used for budget creation, monitoring, and progress calculation features.
  */
 
-import { ExpenseCategory } from './expense';
+import { ExpenseCategory, Transaction } from './expense';
 
 export interface Budget {
   id: string;
@@ -39,7 +39,7 @@ export interface BudgetActions {
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
   fetchBudgets: (userId?: string) => void;
-  calculateBudgetProgress: (transactions?: any[], month?: number, year?: number) => void;
+  calculateBudgetProgress: (transactions?: Transaction[], month?: number, year?: number) => void;
   getBudgetByCategory: (category: ExpenseCategory, month?: number, year?: number) => Budget | null;
 }
 
