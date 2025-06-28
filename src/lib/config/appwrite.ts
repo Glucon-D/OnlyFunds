@@ -49,6 +49,11 @@ export const appwriteConfig = {
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "main",
   userCollectionId:
     process.env.NEXT_PUBLIC_APPWRITE_USER_COLLECTION_ID || "users",
+  transactionsCollectionId:
+    process.env.NEXT_PUBLIC_APPWRITE_TRANSACTIONS_COLLECTION_ID ||
+    "transactions",
+  budgetsCollectionId:
+    process.env.NEXT_PUBLIC_APPWRITE_BUDGETS_COLLECTION_ID || "budgets",
   storageId: process.env.NEXT_PUBLIC_APPWRITE_STORAGE_ID || "files",
 };
 
