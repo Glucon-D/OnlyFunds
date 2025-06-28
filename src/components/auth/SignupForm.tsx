@@ -1,10 +1,8 @@
 /**
- * Signup Form Component
+ * Signup Form Component - Modern Greenish Theme
  *
- * A form component for user registration with username, email, password, and
- * password confirmation fields. Includes client-side validation using Zod schemas,
- * error handling, and loading states. Integrates with the auth store for signup
- * functionality and redirects to dashboard on successful registration.
+ * Modern, clean, and professional signup form using a green color palette.
+ * Supports both light and dark mode. Uses reusable UI components.
  */
 
 "use client";
@@ -56,13 +54,6 @@ export const SignupForm: React.FC = () => {
       }
     }
   }, []);
-
-  // Helper for required label (if you ever update Input to accept ReactNode)
-  // const requiredLabel = (label: string) => (
-  //   <span>
-  //     {label} <span className="text-red-500">*</span>
-  //   </span>
-  // );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -142,12 +133,14 @@ export const SignupForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center">Create Account</CardTitle>
+    <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-white dark:bg-gray-900 rounded-2xl">
+      <CardHeader className="bg-primary text-white dark:bg-primary-dark rounded-t-2xl">
+        <CardTitle className="text-center text-2xl font-bold tracking-tight">
+          Create Account
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="p-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             type="text"
             name="username"
@@ -204,6 +197,7 @@ export const SignupForm: React.FC = () => {
               checked={acceptedTerms}
               onChange={handleTermsChange}
               disabled={isLoading}
+              className="accent-primary focus:ring-primary"
             />
             <label
               htmlFor="terms"
@@ -214,7 +208,7 @@ export const SignupForm: React.FC = () => {
                 href="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline dark:text-blue-400"
+                className="text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
               >
                 Terms and Conditions
               </a>
@@ -228,7 +222,7 @@ export const SignupForm: React.FC = () => {
 
           {/* Success State */}
           {success && (
-            <div className="text-sm text-green-600 dark:text-green-400 text-center">
+            <div className="text-sm text-primary-dark bg-accent rounded p-2 text-center mt-2">
               Account created! Redirecting...
             </div>
           )}
@@ -243,7 +237,7 @@ export const SignupForm: React.FC = () => {
           <Button
             type="button"
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition"
+            className="w-full flex items-center justify-center gap-2 border-2 border-primary bg-white dark:bg-gray-900 text-primary hover:bg-accent dark:hover:bg-gray-800 font-medium transition rounded-lg"
             disabled={isLoading || googleLoading}
             onClick={() => {
               setGoogleLoading(true);
@@ -280,19 +274,19 @@ export const SignupForm: React.FC = () => {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full py-2 rounded-lg font-semibold bg-primary text-white hover:bg-primary-dark transition shadow"
             isLoading={isLoading}
             disabled={isLoading}
           >
             {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
 
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
             Already have an account?{" "}
             <button
               type="button"
               onClick={() => router.push("/login")}
-              className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              className="text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
               disabled={isLoading}
             >
               Sign in

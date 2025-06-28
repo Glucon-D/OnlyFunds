@@ -1,10 +1,8 @@
 /**
- * Login Form Component
+ * Login Form Component - Modern Greenish Theme
  *
- * A form component for user authentication with email and password fields.
- * Includes client-side validation using Zod schemas, error handling, and
- * loading states. Integrates with the auth store for login functionality
- * and redirects to dashboard on successful authentication.
+ * Modern, clean, and professional login form using a green color palette.
+ * Supports both light and dark mode. Uses reusable UI components.
  */
 
 "use client";
@@ -30,7 +28,9 @@ export const LoginForm: React.FC = () => {
   });
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
-  const [googleLinkMessage, setGoogleLinkMessage] = useState<string | null>(null);
+  const [googleLinkMessage, setGoogleLinkMessage] = useState<string | null>(
+    null
+  );
   const [rememberMe, setRememberMe] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
@@ -73,7 +73,9 @@ export const LoginForm: React.FC = () => {
     try {
       // TODO: Integrate with your auth system's forgot password endpoint
       // Example: await forgotPassword(forgotEmail);
-      setForgotSuccess("If this email is registered, a reset link has been sent.");
+      setForgotSuccess(
+        "If this email is registered, a reset link has been sent."
+      );
       setForgotEmail("");
     } catch (error) {
       setForgotError("Failed to send reset email. Please try again.");
@@ -146,12 +148,14 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center">Welcome Back</CardTitle>
+    <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-white dark:bg-gray-900 rounded-2xl">
+      <CardHeader className="bg-primary text-white dark:bg-primary-dark rounded-t-2xl">
+        <CardTitle className="text-center text-2xl font-bold tracking-tight">
+          Welcome Back
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="p-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             type="email"
             name="email"
@@ -176,11 +180,27 @@ export const LoginForm: React.FC = () => {
             autoComplete="current-password"
           />
 
-          {/* Forgot Password Link */}
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2 group">
+              <Checkbox
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={handleRememberMeChange}
+                disabled={isLoading}
+                className="accent-primary transition-transform duration-150 group-hover:scale-105"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-gray-700 dark:text-gray-300 select-none transition-transform transition-colors duration-150 group-hover:scale-105 group-hover:text-green-600 dark:group-hover:text-green-400 cursor-pointer"
+                style={{ willChange: "transform" }}
+              >
+                Remember me
+              </label>
+            </div>
             <button
               type="button"
-              className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+              className="text-xs text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
+              style={{ willChange: "transform" }}
               onClick={() => setForgotOpen(true)}
               disabled={isLoading}
             >
@@ -188,25 +208,8 @@ export const LoginForm: React.FC = () => {
             </button>
           </div>
 
-          {/* Remember Me Checkbox */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={handleRememberMeChange}
-              disabled={isLoading}
-            />
-            <label
-              htmlFor="rememberMe"
-              className="text-sm text-gray-700 dark:text-gray-300 select-none"
-            >
-              Remember me
-            </label>
-          </div>
-
-          {/* Success State */}
           {success && (
-            <div className="text-sm text-green-600 dark:text-green-400 text-center">
+            <div className="text-sm text-primary-dark bg-accent rounded p-2 text-center mt-2">
               Login successful! Redirecting...
             </div>
           )}
@@ -217,11 +220,19 @@ export const LoginForm: React.FC = () => {
             </div>
           )}
 
-          {/* Google Sign-In Button */}
+          <Button
+            type="submit"
+            className="w-full py-2 rounded-lg font-semibold bg-primary text-white hover:bg-primary-dark transition shadow"
+            isLoading={isLoading}
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing In..." : "Sign In"}
+          </Button>
+
           <Button
             type="button"
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition"
+            className="w-full flex items-center justify-center gap-2 border-2 border-primary bg-white dark:bg-gray-900 text-primary hover:bg-accent dark:hover:bg-gray-800 font-medium transition rounded-lg"
             disabled={isLoading || googleLoading}
             onClick={() => {
               setGoogleLoading(true);
@@ -231,46 +242,52 @@ export const LoginForm: React.FC = () => {
             }}
           >
             {googleLoading ? (
-              <svg className="animate-spin h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              <svg
+                className="animate-spin h-5 w-5 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                ></path>
               </svg>
             ) : (
               <FcGoogle className="text-xl" />
             )}
             <span className="font-medium">
-              {googleLoading ? "Signing in with Google..." : "Sign in with Google"}
+              {googleLoading
+                ? "Signing in with Google..."
+                : "Sign in with Google"}
             </span>
           </Button>
 
-          {/* Google OAuth Error Handling */}
           {googleError && (
             <div className="text-sm text-red-600 dark:text-red-400 text-center mt-2">
               {googleError}
             </div>
           )}
-          {/* Account Linking Message */}
           {googleLinkMessage && (
             <div className="text-sm text-yellow-600 dark:text-yellow-400 text-center mt-2">
               {googleLinkMessage}
             </div>
           )}
 
-          <Button
-            type="submit"
-            className="w-full"
-            isLoading={isLoading}
-            disabled={isLoading}
-          >
-            {isLoading ? "Signing In..." : "Sign In"}
-          </Button>
-
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
             Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={() => router.push("/signup")}
-              className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              className="text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
               disabled={isLoading}
             >
               Sign up
@@ -282,7 +299,9 @@ export const LoginForm: React.FC = () => {
       {/* Forgot Password Modal */}
       <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
         <div className="p-6 bg-white dark:bg-gray-900 rounded shadow max-w-sm w-full mx-auto">
-          <h2 className="text-lg font-semibold mb-2 text-center">Reset Password</h2>
+          <h2 className="text-lg font-semibold mb-2 text-center">
+            Reset Password
+          </h2>
           <form onSubmit={handleForgotSubmit} className="space-y-3">
             <Input
               type="email"
@@ -290,15 +309,19 @@ export const LoginForm: React.FC = () => {
               label="Email"
               placeholder="Enter your registered email"
               value={forgotEmail}
-              onChange={e => setForgotEmail(e.target.value)}
+              onChange={(e) => setForgotEmail(e.target.value)}
               disabled={isLoading}
               autoComplete="email"
             />
             {forgotError && (
-              <div className="text-sm text-red-600 dark:text-red-400">{forgotError}</div>
+              <div className="text-sm text-red-600 dark:text-red-400">
+                {forgotError}
+              </div>
             )}
             {forgotSuccess && (
-              <div className="text-sm text-green-600 dark:text-green-400">{forgotSuccess}</div>
+              <div className="text-sm text-green-600 dark:text-green-400">
+                {forgotSuccess}
+              </div>
             )}
             <div className="flex justify-between">
               <Button
