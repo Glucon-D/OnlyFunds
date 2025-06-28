@@ -71,7 +71,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
 
       // First, try to get data from localStorage (fast)
-      let userTransactions = getTransactionsByUserId(userId);
+      const userTransactions = getTransactionsByUserId(userId);
 
       // Update state with local data immediately
       set({

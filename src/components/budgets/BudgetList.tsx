@@ -11,11 +11,7 @@
 
 import React, { useEffect, useMemo, useCallback } from "react";
 import { useBudgetStore, useExpenseStore, useAuthStore } from "@/lib/zustand";
-import {
-  formatCurrency,
-  getCategoryDisplayName,
-  getBudgetProgressBgColor,
-} from "@/lib/utils/helpers";
+import { formatCurrency, getCategoryDisplayName } from "@/lib/utils/helpers";
 import {
   ExpenseCategory,
   Budget,
@@ -25,7 +21,11 @@ import {
 } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { getCurrentMonth, getCurrentYear } from "@/lib/utils/helpers";
+import {
+  getCurrentMonth,
+  getCurrentYear,
+  getMonthName,
+} from "@/lib/utils/helpers";
 
 // Optimized function to calculate budget progress
 const calculateBudgetProgressOptimized = (
@@ -81,7 +81,15 @@ const calculateBudgetProgressOptimized = (
   });
 };
 
-export const BudgetList: React.FC = React.memo(() => {
+interface BudgetListProps {
+  selectedMonth?: number;
+  selectedYear?: number;
+}
+
+const BudgetListComponent: React.FC<BudgetListProps> = ({
+  selectedMonth,
+  selectedYear,
+}) => {
   const { budgets, fetchBudgets, isLoading: budgetsLoading } = useBudgetStore();
   const {
     transactions,
@@ -92,12 +100,16 @@ export const BudgetList: React.FC = React.memo(() => {
 
   // Calculate budget progress using useMemo for optimal performance
   const budgetProgress = useMemo(() => {
-    return calculateBudgetProgressOptimized(budgets, transactions);
-  }, [budgets, transactions]);
+    return calculateBudgetProgressOptimized(
+      budgets,
+      transactions,
+      selectedMonth,
+      selectedYear
+    );
+  }, [budgets, transactions, selectedMonth, selectedYear]);
 
   // Check if we're still loading or calculating
   const isLoading = budgetsLoading || transactionsLoading;
-  const hasData = budgets.length > 0 && transactions.length >= 0;
 
   // Debug logging (commented out for performance)
   // console.log("BudgetList render:", {
@@ -127,8 +139,8 @@ export const BudgetList: React.FC = React.memo(() => {
         const budgetToDelete = budgets.find(
           (b) =>
             b.category === category &&
-            b.month === getCurrentMonth() &&
-            b.year === getCurrentYear()
+            b.month === (selectedMonth || getCurrentMonth()) &&
+            b.year === (selectedYear || getCurrentYear())
         );
 
         if (budgetToDelete) {
@@ -143,7 +155,7 @@ export const BudgetList: React.FC = React.memo(() => {
         }
       }
     },
-    [budgets]
+    [budgets, selectedMonth, selectedYear]
   );
 
   // Show loader while data is being fetched
@@ -235,8 +247,14 @@ export const BudgetList: React.FC = React.memo(() => {
                 No Budgets Set Yet
               </h3>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-lg mx-auto leading-relaxed">
-                Create your first budget to start tracking your spending and
-                take control of your financial future
+                {selectedMonth &&
+                selectedYear &&
+                (selectedMonth !== getCurrentMonth() ||
+                  selectedYear !== getCurrentYear())
+                  ? `No budgets found for ${getMonthName(
+                      selectedMonth
+                    )} ${selectedYear}. Create a budget for this period to start tracking your spending.`
+                  : "Create your first budget to start tracking your spending and take control of your financial future"}
               </p>
 
               <div className="flex flex-col items-center space-y-4">
@@ -695,4 +713,8 @@ export const BudgetList: React.FC = React.memo(() => {
       ))}
     </div>
   );
-});
+};
+
+BudgetListComponent.displayName = "BudgetList";
+
+export const BudgetList = React.memo(BudgetListComponent);

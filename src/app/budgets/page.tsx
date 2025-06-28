@@ -13,15 +13,28 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useBudgetStore, useExpenseStore } from "@/lib/zustand";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { BudgetList } from "@/components/budgets/BudgetList";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
+import {
+  getCurrentMonth,
+  getCurrentYear,
+  getMonthOptions,
+  getYearOptions,
+  getMonthName,
+} from "@/lib/utils/helpers";
 
 export default function BudgetsPage() {
   const router = useRouter();
   const { user, isLoggedIn, isLoading } = useAuthStore();
-  const { fetchBudgets, budgetProgress } = useBudgetStore();
-  const { fetchTransactions } = useExpenseStore();
+  const { fetchBudgets, budgetProgress, calculateBudgetProgress } =
+    useBudgetStore();
+  const { fetchTransactions, transactions } = useExpenseStore();
   const [showBudgetForm, setShowBudgetForm] = useState(false);
+
+  // Selected month/year state
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [selectedYear, setSelectedYear] = useState(getCurrentYear());
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -35,6 +48,31 @@ export default function BudgetsPage() {
       fetchTransactions(user.id); // Needed for budget progress calculation
     }
   }, [isLoggedIn, user?.id, fetchBudgets, fetchTransactions]);
+
+  // Recalculate budget progress when month/year changes
+  useEffect(() => {
+    if (transactions.length > 0) {
+      calculateBudgetProgress(transactions, selectedMonth, selectedYear);
+    }
+  }, [selectedMonth, selectedYear, transactions, calculateBudgetProgress]);
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMonth(parseInt(e.target.value, 10));
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedYear(parseInt(e.target.value, 10));
+  };
+
+  const monthOptions = getMonthOptions().map((option) => ({
+    value: option.value.toString(),
+    label: option.label,
+  }));
+
+  const yearOptions = getYearOptions(2020, 2030).map((option) => ({
+    value: option.value.toString(),
+    label: option.label,
+  }));
 
   if (isLoading) {
     return (
@@ -245,21 +283,56 @@ export default function BudgetsPage() {
             </div>
           )}
 
-          {/* Action Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-            <div className="flex items-center space-x-3">
-              <div className="hidden sm:block text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Current Period
+          {/* Action Bar with Month/Year Selection */}
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8">
+            {/* Period Selection */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="text-center sm:text-left">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                  Viewing Period
                 </p>
                 <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                  {new Date().toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {getMonthName(selectedMonth)} {selectedYear}
                 </p>
               </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-slate-500 dark:text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <Select
+                    name="month"
+                    value={selectedMonth.toString()}
+                    onChange={handleMonthChange}
+                    options={monthOptions}
+                    className="min-w-[120px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Select
+                    name="year"
+                    value={selectedYear.toString()}
+                    onChange={handleYearChange}
+                    options={yearOptions}
+                    className="min-w-[100px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Create Budget Button */}
             <Button
               onClick={() => setShowBudgetForm(true)}
               className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 px-6 py-3"
@@ -285,7 +358,10 @@ export default function BudgetsPage() {
 
         {/* Budget List */}
         <div className="animate-fade-in-up">
-          <BudgetList />
+          <BudgetList
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+          />
         </div>
 
         {/* Enhanced Budget Form Modal */}
@@ -293,6 +369,8 @@ export default function BudgetsPage() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
             <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-md border border-slate-200/50 dark:border-slate-700/50 animate-scale-in">
               <BudgetForm
+                defaultMonth={selectedMonth}
+                defaultYear={selectedYear}
                 onSuccess={() => {
                   setShowBudgetForm(false);
                   if (user?.id) {

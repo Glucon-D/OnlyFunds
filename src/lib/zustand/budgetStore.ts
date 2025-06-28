@@ -166,7 +166,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
       }
 
       // First, try to get data from localStorage (fast)
-      let userBudgets = getBudgetsByUserId(userId);
+      const userBudgets = getBudgetsByUserId(userId);
 
       // Update state with local data immediately
       set({
@@ -211,7 +211,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
     const targetYear = year || getCurrentYear();
 
     // Use provided transactions or empty array if none provided
-    let transactionsToUse = transactions;
+    const transactionsToUse = transactions;
 
     const progress: BudgetProgress[] = budgets
       .filter((b) => b.month === targetMonth && b.year === targetYear)

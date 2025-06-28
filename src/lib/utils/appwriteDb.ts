@@ -7,8 +7,57 @@
  */
 
 import { databases, appwriteConfig, isConfigured } from "../config/appwrite";
-import { Transaction, Budget } from "../types";
+import {
+  Transaction,
+  Budget,
+  TransactionType,
+  ExpenseCategory,
+  IncomeCategory,
+} from "../types";
 import { ID, Query } from "appwrite";
+
+// Appwrite document interfaces
+interface AppwriteTransactionDocument {
+  $id: string;
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  description: string;
+  category: string;
+  date: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+interface AppwriteBudgetDocument {
+  $id: string;
+  id: string;
+  userId: string;
+  category: string;
+  amount: number;
+  month: number;
+  year: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TransactionUpdateData {
+  type?: string;
+  amount?: number;
+  description?: string;
+  category?: string;
+  date?: string;
+  updatedAt: string;
+}
+
+interface BudgetUpdateData {
+  category?: string;
+  amount?: number;
+  month?: number;
+  year?: number;
+  updatedAt: string;
+}
 
 // Transaction Database Operations
 export const appwriteTransactionService = {
@@ -69,16 +118,19 @@ export const appwriteTransactionService = {
         [Query.equal("userId", userId), Query.orderDesc("createdAt")]
       );
 
-      return response.documents.map((doc: any) => ({
-        id: doc.id,
-        userId: doc.userId,
-        type: doc.type,
-        amount: doc.amount,
-        description: doc.description,
-        category: doc.category,
-        date: new Date(doc.date),
-        createdAt: new Date(doc.createdAt),
-      }));
+      return response.documents.map((doc) => {
+        const typedDoc = doc as unknown as AppwriteTransactionDocument;
+        return {
+          id: typedDoc.id,
+          userId: typedDoc.userId,
+          type: typedDoc.type as TransactionType,
+          amount: typedDoc.amount,
+          description: typedDoc.description,
+          category: typedDoc.category as ExpenseCategory | IncomeCategory,
+          date: new Date(typedDoc.date),
+          createdAt: new Date(typedDoc.createdAt),
+        };
+      });
     } catch (error) {
       console.error("Error fetching transactions from Appwrite:", error);
       return [];
@@ -138,16 +190,15 @@ export const appwriteTransactionService = {
         return null;
       }
 
-      const updateData: any = {};
+      const updateData: TransactionUpdateData = {
+        updatedAt: new Date().toISOString(),
+      };
 
       if (updates.type) updateData.type = updates.type;
       if (updates.amount !== undefined) updateData.amount = updates.amount;
       if (updates.description) updateData.description = updates.description;
       if (updates.category) updateData.category = updates.category;
       if (updates.date) updateData.date = updates.date.toISOString();
-
-      // Always update the updatedAt timestamp
-      updateData.updatedAt = new Date().toISOString();
 
       const updateResponse = await databases.updateDocument(
         appwriteConfig.databaseId,
@@ -229,16 +280,19 @@ export const appwriteBudgetService = {
         [Query.equal("userId", userId), Query.orderDesc("createdAt")]
       );
 
-      return response.documents.map((doc: any) => ({
-        id: doc.id,
-        userId: doc.userId,
-        category: doc.category,
-        amount: doc.amount,
-        month: doc.month,
-        year: doc.year,
-        createdAt: new Date(doc.createdAt),
-        updatedAt: new Date(doc.updatedAt),
-      }));
+      return response.documents.map((doc) => {
+        const typedDoc = doc as unknown as AppwriteBudgetDocument;
+        return {
+          id: typedDoc.id,
+          userId: typedDoc.userId,
+          category: typedDoc.category as ExpenseCategory,
+          amount: typedDoc.amount,
+          month: typedDoc.month,
+          year: typedDoc.year,
+          createdAt: new Date(typedDoc.createdAt),
+          updatedAt: new Date(typedDoc.updatedAt),
+        };
+      });
     } catch (error) {
       console.error("Error fetching budgets from Appwrite:", error);
       return [];
@@ -267,7 +321,7 @@ export const appwriteBudgetService = {
         return null;
       }
 
-      const updateData: any = {
+      const updateData: BudgetUpdateData = {
         updatedAt: new Date().toISOString(),
       };
 
