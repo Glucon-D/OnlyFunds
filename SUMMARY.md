@@ -58,14 +58,15 @@ onlyfunds/
 
 #### `/src/components/ui/` - Base UI Components
 
-| File              | Purpose                   | Key Features                                |
-| ----------------- | ------------------------- | ------------------------------------------- |
-| `Button.tsx`      | Reusable button component | Multiple variants, sizes, loading states    |
-| `Card.tsx`        | Card container component  | Header, content, footer sections            |
-| `Input.tsx`       | Form input component      | Validation states, error messages           |
-| `Select.tsx`      | Dropdown select component | Custom styling, option handling             |
-| `Dropdown.tsx`    | Advanced dropdown menu    | Hover behavior, keyboard nav, accessibility |
-| `ThemeToggle.tsx` | Theme switcher component  | Light/dark mode toggle                      |
+| File              | Purpose                   | Key Features                                           |
+| ----------------- | ------------------------- | ------------------------------------------------------ |
+| `Button.tsx`      | Reusable button component | Multiple variants, sizes, loading states               |
+| `Card.tsx`        | Card container component  | Header, content, footer sections                       |
+| `Input.tsx`       | Form input component      | Validation states, error messages                      |
+| `Select.tsx`      | Dropdown select component | Custom styling, option handling                        |
+| `Dropdown.tsx`    | Advanced dropdown menu    | Hover behavior, keyboard nav, accessibility            |
+| `ThemeToggle.tsx` | Theme switcher component  | Light/dark mode toggle                                 |
+| `AuthLoader.tsx`  | Authentication loader     | Spinner with gradient effects, size variants, SSR-safe |
 
 #### `/src/components/layout/`
 
@@ -87,6 +88,12 @@ onlyfunds/
 | ---------------- | ------------------------ | ---------------------------------- |
 | `BudgetForm.tsx` | Budget creation form     | Category selection, amount setting |
 | `BudgetList.tsx` | Budget display component | Progress bars, overspending alerts |
+
+#### `/src/components/providers/`
+
+| File                | Purpose                   | Key Features                                                 |
+| ------------------- | ------------------------- | ------------------------------------------------------------ |
+| `ToastProvider.tsx` | Global toast notification | React-hot-toast configuration, custom styling, themed colors |
 
 ### `/src/lib/` - Core Logic & Utilities
 
@@ -119,9 +126,16 @@ onlyfunds/
 
 #### `/src/lib/hooks/` - Custom React Hooks
 
-| File           | Purpose                 | Key Features                                  |
-| -------------- | ----------------------- | --------------------------------------------- |
-| `useStores.ts` | Store integration hooks | Auth-aware store access, data synchronization |
+| File           | Purpose                 | Key Features                                                |
+| -------------- | ----------------------- | ----------------------------------------------------------- |
+| `useStores.ts` | Store integration hooks | Auth-aware store access, data synchronization               |
+| `useAuth.ts`   | Authentication hooks    | Optimized auth state/actions, performance-focused selectors |
+
+#### `/src/lib/config/` - Configuration Files
+
+| File          | Purpose                | Key Features                                               |
+| ------------- | ---------------------- | ---------------------------------------------------------- |
+| `appwrite.ts` | Appwrite configuration | Client setup, environment validation, OAuth URLs, SSR-safe |
 
 ---
 
@@ -170,6 +184,50 @@ Reusable dropdown with advanced features:
 - **Component Variants**: DropdownItem, DropdownSeparator sub-components
 - **Animation System**: Smooth scale and opacity transitions
 
+### Authentication Loader (`AuthLoader.tsx`)
+
+Professional loading component for authentication flows:
+
+- **Multiple Variants**: AuthLoader, AuthPageLoader, AuthFormLoader
+- **Size Options**: Small, medium, large with responsive scaling
+- **Gradient Effects**: Modern spinner with green gradient animation
+- **Professional Design**: Outer ring, spinning gradient, inner pulsing dot
+- **SSR Compatible**: Client-side only rendering with proper checks
+- **Customizable**: Configurable messages and styling options
+
+### Toast Provider (`ToastProvider.tsx`)
+
+Global notification system using react-hot-toast:
+
+- **Themed Styling**: Custom colors for success, error, loading states
+- **Position Control**: Top-right positioning with configurable options
+- **Duration Management**: Different timeout durations per notification type
+- **Visual Feedback**: Color-coded notifications (green success, red error, blue loading)
+- **Global Access**: Available throughout the app via provider pattern
+- **Professional Design**: Dark themed with clean modern styling
+
+### Appwrite Configuration (`appwrite.ts`)
+
+Backend service configuration and client setup:
+
+- **Environment Validation**: Checks for required Appwrite credentials
+- **Service Initialization**: Account, Database, Storage service instances
+- **OAuth Configuration**: Success/failure URL setup for Google authentication
+- **SSR Safety**: Fallback values prevent server-side rendering errors
+- **Configuration Export**: Centralized config values for database/storage IDs
+- **Status Checking**: `isConfigured` flag for conditional feature enabling
+
+### Optimized Auth Hooks (`useAuth.ts`)
+
+Performance-focused authentication state management:
+
+- **useAuthState()**: Optimized selector for user, isLoggedIn, isLoading
+- **useAuthActions()**: Separated actions to prevent unnecessary re-renders
+- **useAuth()**: Combined hook for components needing both state and actions
+- **Shallow Comparison**: Prevents re-renders when unrelated state changes
+- **Performance**: Action separation ensures components only re-render when needed
+- **Zustand Integration**: Direct store access with optimized selectors
+
 ---
 
 ## 🎨 Theme System
@@ -194,18 +252,35 @@ The application uses a centralized theme system in `globals.css`:
 
 ## 🔐 Authentication System
 
+### Architecture
+
+The authentication system is built with **Appwrite** as the backend service, providing:
+
+- **Cloud Authentication**: Secure user management with Appwrite
+- **Session Management**: Server-side session handling
+- **OAuth Support**: Google OAuth integration
+- **Real-time Sync**: Cloud-based user data synchronization
+
 ### Flow
 
-1. **Registration**: Username, email, password (bcrypt hashed)
-2. **Login**: Email/password verification
-3. **Session**: User data stored in localStorage
+1. **Registration**: Create Appwrite user account → Create session → Update local state
+2. **Login**: Authenticate with Appwrite → Create session → Cache user data
+3. **Session Persistence**: localStorage caching with SSR-safe fallbacks
 4. **Protection**: Route guards redirect unauthenticated users
 
 ### Security Features
 
-- **Password Hashing**: bcryptjs for secure storage
+- **Appwrite Security**: Server-side authentication and session management
 - **Input Validation**: Zod schemas prevent malicious input
-- **Local Storage**: All data stored locally (Phase 1)
+- **Session Caching**: Optimized localStorage with browser environment checks
+- **OAuth Integration**: Secure Google authentication flow
+
+### Key Components
+
+- **AuthStore**: Zustand store with optimized session management
+- **useAuth Hook**: Performance-optimized state/action separation
+- **AuthLoader**: Professional loading states for auth flows
+- **ToastProvider**: Global notification system for auth feedback
 
 ---
 
@@ -274,7 +349,8 @@ pnpm lint    # ESLint checking
 - `tailwindcss`: Styling
 - `zustand`: State management
 - `zod`: Validation
-- `bcryptjs`: Password hashing
+- `appwrite`: Backend-as-a-Service for authentication
+- `react-hot-toast`: Toast notification system
 - `clsx`: Class name utility
 - `lucide-react`: Modern icon library
 
@@ -304,10 +380,20 @@ pnpm lint    # ESLint checking
 
 ---
 
-## 🎯 Phase 1 Limitations
+## 🎯 Current Features & Enhancements
 
-- **Local Storage Only**: No cloud synchronization
-- **Single User**: No multi-user support
+### Recent Additions
+
+- **Appwrite Integration**: Cloud authentication with session management
+- **Toast Notifications**: Professional feedback system with react-hot-toast
+- **Loading States**: Enhanced auth loaders with gradient effects
+- **Performance Optimization**: Separated auth hooks for better re-render control
+- **SSR Support**: Server-side rendering compatibility for all components
+
+### Phase 1 Limitations
+
+- **Financial Data**: Still using localStorage for transactions and budgets
+- **Single User**: No multi-user support yet
 - **Basic Categories**: Predefined categories only
 - **No Exports**: No data export functionality
 - **No Recurring**: No recurring transactions

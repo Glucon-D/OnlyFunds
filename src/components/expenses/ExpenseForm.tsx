@@ -57,6 +57,99 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
+  const handleReset = useCallback(() => {
+    setFormData({
+      type: "",
+      amount: "",
+      description: "",
+      category: "",
+      date: formatDateInput(new Date()),
+    });
+    setErrors({});
+    firstInputRef.current?.focus();
+  }, []);
+
+  const validateForm = useCallback((): boolean => {
+    try {
+      transactionFormSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error: unknown) {
+      const fieldErrors: Record<string, string> = {};
+
+      if (error && typeof error === "object" && "errors" in error) {
+        (
+          error as { errors: Array<{ path?: string[]; message: string }> }
+        ).errors.forEach((err) => {
+          if (err.path && err.path[0]) {
+            fieldErrors[err.path[0]] = err.message;
+          }
+        });
+      }
+
+      setErrors(fieldErrors);
+      return false;
+    }
+  }, [formData]);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        // Focus first field with error
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          const element = formRef.current?.querySelector(
+            `[name="${firstErrorField}"]`
+          ) as HTMLElement;
+          element?.focus();
+        }
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        const validatedData = transactionFormSchema.parse(formData);
+
+        addTransaction(
+          {
+            type: validatedData.type,
+            amount: validatedData.amount,
+            description: validatedData.description,
+            category: validatedData.category as
+              | ExpenseCategory
+              | IncomeCategory,
+            date: validatedData.date,
+          },
+          user?.id
+        );
+
+        // Show success animation
+        setShowSuccessAnimation(true);
+
+        // Reset form after brief delay
+        setTimeout(() => {
+          setFormData({
+            type: "",
+            amount: "",
+            description: "",
+            category: "",
+            date: formatDateInput(new Date()),
+          });
+          setShowSuccessAnimation(false);
+          onSuccess?.();
+        }, 1200);
+      } catch (error) {
+        console.error("Error adding transaction:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [validateForm, errors, formData, addTransaction, user?.id, onSuccess]
+  );
+
   // Enhanced keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -84,19 +177,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel]);
-
-  const handleReset = useCallback(() => {
-    setFormData({
-      type: "",
-      amount: "",
-      description: "",
-      category: "",
-      date: formatDateInput(new Date()),
-    });
-    setErrors({});
-    firstInputRef.current?.focus();
-  }, []);
+  }, [onCancel, handleReset, handleSubmit]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -122,82 +203,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       return getIncomeCategories();
     }
     return [];
-  };
-
-  const validateForm = (): boolean => {
-    try {
-      transactionFormSchema.parse(formData);
-      setErrors({});
-      return true;
-    } catch (error: unknown) {
-      const fieldErrors: Record<string, string> = {};
-
-      if (error && typeof error === "object" && "errors" in error) {
-        (
-          error as { errors: Array<{ path?: string[]; message: string }> }
-        ).errors.forEach((err) => {
-          if (err.path && err.path[0]) {
-            fieldErrors[err.path[0]] = err.message;
-          }
-        });
-      }
-
-      setErrors(fieldErrors);
-      return false;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      // Focus first field with error
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = formRef.current?.querySelector(
-          `[name="${firstErrorField}"]`
-        ) as HTMLElement;
-        element?.focus();
-      }
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const validatedData = transactionFormSchema.parse(formData);
-
-      addTransaction(
-        {
-          type: validatedData.type,
-          amount: validatedData.amount,
-          description: validatedData.description,
-          category: validatedData.category as ExpenseCategory | IncomeCategory,
-          date: validatedData.date,
-        },
-        user?.id
-      );
-
-      // Show success animation
-      setShowSuccessAnimation(true);
-
-      // Reset form after brief delay
-      setTimeout(() => {
-        setFormData({
-          type: "",
-          amount: "",
-          description: "",
-          category: "",
-          date: formatDateInput(new Date()),
-        });
-        setShowSuccessAnimation(false);
-        onSuccess?.();
-      }, 1200);
-    } catch (error) {
-      console.error("Error adding transaction:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const transactionTypeOptions = [
