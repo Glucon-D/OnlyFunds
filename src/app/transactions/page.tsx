@@ -12,7 +12,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useExpenseStore } from "@/lib/zustand";
-import { TransactionType, Transaction } from "@/lib/types";
+import {
+  TransactionType,
+  Transaction,
+  ExpenseCategory,
+  IncomeCategory,
+} from "@/lib/types";
 import {
   formatCurrency,
   formatDate,
@@ -20,7 +25,6 @@ import {
 } from "@/lib/utils/helpers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import {
   Dropdown,
   DropdownItem,
@@ -32,18 +36,14 @@ import {
   Plus,
   Search,
   Filter,
-  ArrowUpDown,
   Calendar,
   TrendingUp,
   TrendingDown,
   DollarSign,
   Eye,
   Trash2,
-  MoreHorizontal,
   Download,
   RefreshCw,
-  PiggyBank,
-  CreditCard,
   BarChart3,
   ArrowUp,
   ArrowDown,
@@ -685,7 +685,9 @@ export default function TransactionsPage() {
                   <span className="truncate">
                     {selectedCategory === "all"
                       ? "All Categories"
-                      : getCategoryDisplayName(selectedCategory as any)}
+                      : getCategoryDisplayName(
+                          selectedCategory as ExpenseCategory | IncomeCategory
+                        )}
                   </span>
                 </div>
                 <ChevronDown

@@ -18,21 +18,8 @@ import {
   getCurrentMonth,
   getCurrentYear,
 } from "@/lib/utils/helpers";
-import { Button } from "@/components/ui/Button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownSeparator,
-} from "@/components/ui/Dropdown";
 import { ExpenseForm } from "@/components/expenses/ExpenseForm";
-import {
-  BarChart,
-  BarChart2,
-  ChartColumnBig,
-  Lightbulb,
-  Receipt,
-} from "lucide-react";
+import { ChartColumnBig, Lightbulb } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();

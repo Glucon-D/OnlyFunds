@@ -475,7 +475,7 @@ export const BudgetList: React.FC = () => {
                       Budget Exceeded
                     </h4>
                     <p className="text-sm text-red-700 dark:text-red-300">
-                      You've exceeded your budget for this category by{" "}
+                      You&apos;ve exceeded your budget for this category by{" "}
                       <span className="font-semibold">
                         {formatCurrency(Math.abs(progress.remainingAmount))}
                       </span>
@@ -513,8 +513,8 @@ export const BudgetList: React.FC = () => {
                       Approaching Budget Limit
                     </h4>
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      You've used {progress.percentageUsed}% of your budget. You
-                      have{" "}
+                      You&apos;ve used {progress.percentageUsed}% of your
+                      budget. You have{" "}
                       <span className="font-semibold">
                         {formatCurrency(progress.remainingAmount)}
                       </span>{" "}
