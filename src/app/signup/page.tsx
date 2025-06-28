@@ -1,37 +1,31 @@
 /**
  * Signup Page Component
- * 
+ *
  * The user registration page that renders the SignupForm component.
  * Redirects authenticated users to the dashboard and provides a
  * centered layout for the signup form with proper spacing and styling.
  */
 
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/zustand';
-import { SignupForm } from '@/components/auth/SignupForm';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthState } from "@/lib/hooks/useAuth";
+import { SignupForm } from "@/components/auth/SignupForm";
+import { AuthPageLoader } from "@/components/ui/AuthLoader";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { isLoggedIn, isLoading } = useAuthStore();
+  const { isLoggedIn, isLoading } = useAuthState();
 
   useEffect(() => {
     if (isLoggedIn) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [isLoggedIn, router]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <AuthPageLoader message="Checking authentication..." />;
   }
 
   if (isLoggedIn) {
@@ -39,8 +33,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-      <h2 className="text-4xl font-bold text-primary mb-6 text-center">Create Account</h2>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700">
       <SignupForm />
     </div>
   );

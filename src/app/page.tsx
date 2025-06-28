@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/zustand";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { AuthPageLoader } from "@/components/ui/AuthLoader";
 
 export default function Home() {
   const router = useRouter();
@@ -25,14 +26,7 @@ export default function Home() {
   }, [isLoggedIn, router]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <AuthPageLoader message="Checking authentication..." />;
   }
 
   if (isLoggedIn) {

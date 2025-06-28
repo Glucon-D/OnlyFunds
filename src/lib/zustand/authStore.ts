@@ -1,64 +1,132 @@
 /**
- * Authentication Zustand Store
+ * Optimized Authentication Zustand Store
  *
- * This file contains the Zustand store for managing authentication state and actions.
- * Handles user login, signup, logout, and authentication status checking.
- * Integrates with bcrypt for password hashing and localStorage for session persistence.
- * Central store for all authentication-related state management.
+ * This file contains the optimized Zustand store for managing authentication state and actions.
+ * Features instant session restoration, minimal API calls, and professional loading states.
+ * Integrates with Appwrite authentication services and react-hot-toast for notifications.
+ * Central store for all authentication-related state management with performance optimizations.
  */
 
-import { create } from 'zustand';
-import bcrypt from 'bcryptjs';
-import { AuthStore, User, LoginCredentials, SignupCredentials } from '../types';
-import { 
-  saveUser, 
-  getUser, 
-  removeUser, 
-  saveUserToDatabase, 
-  getUserFromDatabase, 
-  checkUserExists 
-} from '../utils/localDb';
-import { generateId } from '../utils/helpers';
+import { create } from "zustand";
+import { OAuthProvider } from "appwrite";
+import toast from "react-hot-toast";
+import { AuthStore, User, SignupCredentials, LoginCredentials } from "../types";
+import { account, oauthConfig, isConfigured } from "../config/appwrite";
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  // Initial state
-  user: null,
-  isLoggedIn: false,
+// Session cache keys
+const SESSION_CACHE_KEY = "onlyfunds_session";
+const USER_CACHE_KEY = "onlyfunds_user";
+
+// Session cache utilities
+const saveSessionToCache = (user: User) => {
+  // Check for browser environment
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+    window.localStorage.setItem(SESSION_CACHE_KEY, "true");
+  } catch (error) {
+    console.warn("Failed to save session to cache:", error);
+  }
+};
+
+const getSessionFromCache = (): User | null => {
+  // Check for browser environment
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const hasSession = window.localStorage.getItem(SESSION_CACHE_KEY);
+    const userStr = window.localStorage.getItem(USER_CACHE_KEY);
+
+    if (hasSession === "true" && userStr) {
+      const user = JSON.parse(userStr);
+      // Validate user object structure
+      if (user.id && user.email && user.username) {
+        return {
+          ...user,
+          createdAt: new Date(user.createdAt),
+        };
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to get session from cache:", error);
+  }
+  return null;
+};
+
+const clearSessionCache = () => {
+  // Check for browser environment
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(SESSION_CACHE_KEY);
+    window.localStorage.removeItem(USER_CACHE_KEY);
+  } catch (error) {
+    console.warn("Failed to clear session cache:", error);
+  }
+};
+
+export const useAuthStore = create<AuthStore>((set, get) => ({
+  // Initial state - try to restore from cache immediately
+  user: getSessionFromCache(),
+  isLoggedIn: !!getSessionFromCache(),
   isLoading: false,
 
   // Actions
   login: async (credentials: LoginCredentials): Promise<boolean> => {
     set({ isLoading: true });
-    
+
+    const loadingToast = toast.loading("Signing in...");
+
     try {
-      // Get user from local database
-      const userData = getUserFromDatabase(credentials.email);
-      
-      if (!userData) {
+      // Check if Appwrite is properly configured
+      if (!isConfigured) {
+        toast.error(
+          "Authentication not configured. Please check your project settings.",
+          { id: loadingToast }
+        );
         set({ isLoading: false });
         return false;
       }
 
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(credentials.password, userData.hashedPassword);
-      
-      if (!isPasswordValid) {
-        set({ isLoading: false });
-        return false;
-      }
+      // Create session with provided credentials
+      await account.createEmailPasswordSession(
+        credentials.email,
+        credentials.password
+      );
 
-      // Save user session
-      saveUser(userData.user);
-      
+      // Get user details
+      const userAccount = await account.get();
+
+      const user: User = {
+        id: userAccount.$id,
+        username: userAccount.name || userAccount.email.split("@")[0],
+        email: userAccount.email,
+        createdAt: new Date(userAccount.$createdAt),
+      };
+
+      // Save to cache for instant restoration
+      saveSessionToCache(user);
+
       set({
-        user: userData.user,
+        user,
         isLoggedIn: true,
-        isLoading: false
+        isLoading: false,
       });
 
+      toast.success("Successfully signed in!", { id: loadingToast });
       return true;
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (error: unknown) {
+      console.error("Login error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to sign in";
+      toast.error(errorMessage, { id: loadingToast });
       set({ isLoading: false });
       return false;
     }
@@ -66,81 +134,255 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   signup: async (credentials: SignupCredentials): Promise<boolean> => {
     set({ isLoading: true });
-    
+
+    const loadingToast = toast.loading("Creating account...");
+
     try {
-      // Check if user already exists
-      if (checkUserExists(credentials.email)) {
+      // Check if Appwrite is properly configured
+      if (!isConfigured) {
+        toast.error(
+          "Authentication not configured. Please check your project settings.",
+          { id: loadingToast }
+        );
         set({ isLoading: false });
         return false;
       }
 
-      // Hash password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(credentials.password, saltRounds);
+      // First create the user account
+      await account.create(
+        "unique()", // Let Appwrite generate a unique ID
+        credentials.email,
+        credentials.password,
+        credentials.username
+      );
 
-      // Create new user
-      const newUser: User = {
-        id: generateId(),
-        username: credentials.username,
-        email: credentials.email,
-        createdAt: new Date()
+      // Then login the user after successful signup
+      await account.createEmailPasswordSession(
+        credentials.email,
+        credentials.password
+      );
+
+      // Get updated user details
+      const updatedUserAccount = await account.get();
+
+      const user: User = {
+        id: updatedUserAccount.$id,
+        username: updatedUserAccount.name || credentials.username,
+        email: updatedUserAccount.email,
+        createdAt: new Date(updatedUserAccount.$createdAt),
       };
 
-      // Save user to database
-      saveUserToDatabase(newUser, hashedPassword);
-      
-      // Save user session
-      saveUser(newUser);
-      
+      // Save to cache for instant restoration
+      saveSessionToCache(user);
+
       set({
-        user: newUser,
+        user,
         isLoggedIn: true,
-        isLoading: false
+        isLoading: false,
       });
 
+      toast.success("Account created successfully!", { id: loadingToast });
       return true;
-    } catch (error) {
-      console.error('Signup error:', error);
+    } catch (error: unknown) {
+      console.error("Signup error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create account";
+      toast.error(errorMessage, {
+        id: loadingToast,
+      });
       set({ isLoading: false });
       return false;
     }
   },
 
-  logout: () => {
-    removeUser();
-    set({
-      user: null,
-      isLoggedIn: false,
-      isLoading: false
-    });
+  loginWithGoogle: async (): Promise<boolean> => {
+    set({ isLoading: true });
+
+    const loadingToast = toast.loading("Redirecting to Google...");
+
+    try {
+      // Check if Appwrite is properly configured
+      if (!isConfigured) {
+        toast.error(
+          "Authentication not configured. Please check your project settings.",
+          { id: loadingToast }
+        );
+        set({ isLoading: false });
+        return false;
+      }
+      // Create OAuth2 session with Google
+      account.createOAuth2Session(
+        OAuthProvider.Google,
+        oauthConfig.successUrl,
+        oauthConfig.failureUrl
+      );
+
+      toast.success("Redirecting to Google...", { id: loadingToast });
+      return true;
+    } catch (error: unknown) {
+      console.error("Google OAuth error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to login with Google";
+      toast.error(errorMessage, {
+        id: loadingToast,
+      });
+      set({ isLoading: false });
+      return false;
+    }
   },
 
-  checkAuthStatus: () => {
+  logout: async () => {
+    // Set loading state for smooth UI feedback
     set({ isLoading: true });
-    
+
+    const loadingToast = toast.loading("Signing out...");
+
     try {
-      const user = getUser();
-      
-      if (user) {
-        set({
-          user,
-          isLoggedIn: true,
-          isLoading: false
-        });
-      } else {
-        set({
-          user: null,
-          isLoggedIn: false,
-          isLoading: false
-        });
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
+      // Optimistic update - clear local state first for instant feedback
+      clearSessionCache();
+
+      // Update state optimistically
       set({
         user: null,
         isLoggedIn: false,
-        isLoading: false
+        isLoading: false,
+      });
+
+      // Then attempt server logout (don't block UI on this)
+      await account.deleteSession("current");
+
+      toast.success("Successfully signed out!", { id: loadingToast });
+    } catch (error: unknown) {
+      console.error("Logout error:", error);
+
+      // Even if server logout fails, we've already logged out locally
+      // This prevents being stuck in a half-logged-out state
+      toast.success("Successfully signed out!", { id: loadingToast });
+
+      // Ensure local state is cleared regardless of server response
+      clearSessionCache();
+      set({
+        user: null,
+        isLoggedIn: false,
+        isLoading: false,
       });
     }
-  }
+  },
+
+  checkAuthStatus: async () => {
+    const currentState = get();
+
+    // If we already have a cached session, don't make API call unless forced
+    if (currentState.isLoggedIn && currentState.user) {
+      return;
+    }
+
+    // Don't show loading for auth checks to avoid UI flicker
+    set({ isLoading: false });
+
+    try {
+      // Check if Appwrite is properly configured
+      if (!isConfigured) {
+        clearSessionCache();
+        set({
+          user: null,
+          isLoggedIn: false,
+          isLoading: false,
+        });
+        return;
+      }
+
+      // Check if user is authenticated with Appwrite
+      const userAccount = await account.get();
+
+      const user: User = {
+        id: userAccount.$id,
+        username: userAccount.name || userAccount.email.split("@")[0],
+        email: userAccount.email,
+        createdAt: new Date(userAccount.$createdAt),
+      };
+
+      // Update cache with fresh data
+      saveSessionToCache(user);
+
+      set({
+        user,
+        isLoggedIn: true,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      // Clear invalid cache
+      clearSessionCache();
+
+      // Silently handle auth check errors - don't show toasts for background checks
+      if (error && typeof error === "object" && "code" in error) {
+        if (error.code === 401) {
+          // User not authenticated - this is normal, no need to log
+        } else if (
+          error.code === 404 ||
+          (error instanceof Error &&
+            error.message?.includes(
+              "Project with the requested ID could not be found"
+            ))
+        ) {
+          // Project not found - only log, don't show toast for background checks
+          console.error(
+            "Appwrite project not found. Please check your project ID in .env file."
+          );
+        } else {
+          // Other errors - only log for debugging
+          console.error("Auth check error:", error);
+        }
+      } else {
+        // Other errors - only log for debugging
+        console.error("Auth check error:", error);
+      }
+
+      set({
+        user: null,
+        isLoggedIn: false,
+        isLoading: false,
+      });
+    }
+  },
+
+  // Force refresh auth status (bypasses cache)
+  forceCheckAuthStatus: async () => {
+    set({ isLoading: true });
+
+    try {
+      if (!isConfigured) {
+        clearSessionCache();
+        set({
+          user: null,
+          isLoggedIn: false,
+          isLoading: false,
+        });
+        return;
+      }
+
+      const userAccount = await account.get();
+      const user: User = {
+        id: userAccount.$id,
+        username: userAccount.name || userAccount.email.split("@")[0],
+        email: userAccount.email,
+        createdAt: new Date(userAccount.$createdAt),
+      };
+
+      saveSessionToCache(user);
+      set({
+        user,
+        isLoggedIn: true,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      clearSessionCache();
+      console.error("Auth check error:", error);
+      set({
+        user: null,
+        isLoggedIn: false,
+        isLoading: false,
+      });
+    }
+  },
 }));

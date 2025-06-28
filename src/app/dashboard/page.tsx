@@ -11,7 +11,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore, useExpenseStore } from "@/lib/zustand";
+import { useAuthState } from "@/lib/hooks/useAuth";
+import { useExpenseStore } from "@/lib/zustand";
 import { TransactionType } from "@/lib/types";
 import {
   formatCurrency,
@@ -19,11 +20,12 @@ import {
   getCurrentYear,
 } from "@/lib/utils/helpers";
 import { ExpenseForm } from "@/components/expenses/ExpenseForm";
+import { AuthPageLoader } from "@/components/ui/AuthLoader";
 import { ChartColumnBig, Lightbulb } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isLoggedIn, isLoading } = useAuthStore();
+  const { user, isLoggedIn, isLoading } = useAuthState();
   const { fetchTransactions, getMonthlyTotal } = useExpenseStore();
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -99,46 +101,26 @@ export default function DashboardPage() {
     };
   }, []);
 
+  // Optimized auth check - redirect immediately if not logged in
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
       router.push("/login");
     }
   }, [isLoggedIn, isLoading, router]);
 
+  // Optimized data fetching - only fetch when user is confirmed
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       fetchTransactions(user.id);
     }
   }, [isLoggedIn, user?.id, fetchTransactions]);
 
+  // Professional loading state
   if (isLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "var(--background)" }}
-      >
-        <div className="text-center">
-          <div className="relative">
-            <div
-              className="animate-spin rounded-full h-12 w-12 border-4"
-              style={{ borderColor: "var(--border)" }}
-            ></div>
-            <div
-              className="animate-spin rounded-full h-12 w-12 border-4 border-transparent absolute top-0 left-0"
-              style={{ borderTopColor: "var(--primary)" }}
-            ></div>
-          </div>
-          <p
-            className="mt-4 font-medium"
-            style={{ color: "var(--foreground-secondary)" }}
-          >
-            Loading your dashboard...
-          </p>
-        </div>
-      </div>
-    );
+    return <AuthPageLoader message="Loading your dashboard..." />;
   }
 
+  // Immediate redirect for unauthenticated users
   if (!isLoggedIn) {
     return null; // Will redirect to login
   }

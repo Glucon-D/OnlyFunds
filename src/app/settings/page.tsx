@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Form states
   const [profileData, setProfileData] = useState({
@@ -90,9 +91,24 @@ export default function SettingsPage() {
     return null; // Will redirect to login
   }
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      // Call logout function
+      await logout();
+
+      // Add a small delay for smooth transition, then redirect
+      setTimeout(() => {
+        router.push("/");
+        setIsLoggingOut(false);
+      }, 500);
+    } catch (error) {
+      // Even if logout fails, redirect to home
+      console.error("Logout error:", error);
+      setIsLoggingOut(false);
+      router.push("/");
+    }
   };
 
   const handleProfileUpdate = () => {
@@ -464,10 +480,33 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       onClick={handleLogout}
-                      className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+                      disabled={isLoggingOut}
+                      className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 disabled:opacity-50"
                     >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
+                      {isLoggingOut ? (
+                        <svg
+                          className="w-4 h-4 mr-2 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          ></path>
+                        </svg>
+                      ) : (
+                        <LogOut className="w-4 h-4 mr-2" />
+                      )}
+                      {isLoggingOut ? "Signing Out..." : "Sign Out"}
                     </Button>
                   </div>
                 </div>
