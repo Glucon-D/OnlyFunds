@@ -113,6 +113,39 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --animate-spotlight: spotlight 2s ease 0.75s 1 forwards;
+}
+
+@layer utilities {
+  @keyframes shimmer {
+    from { background-position: 0 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background: linear-gradient(
+      to right,
+      var(--border),
+      var(--border) 10%,
+      transparent 30%,
+      transparent 70%,
+      var(--border) 90%,
+      var(--border)
+    );
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
 }
 
 /* ===== BASE STYLES ===== */

@@ -11,11 +11,17 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/zustand';
-import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { motion, useReducedMotion } from 'framer-motion';
+import { cn } from "@/lib/utils/cn";
+import Link from 'next/link';
+import { Spotlight } from '@/components/ui/Spotlight';
+import { TextGenerateEffect } from '@/components/ui/TextGenerateEffect';
+import GradientButton from '@/components/ui/GradientButton';
 
 export default function Home() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const { isLoggedIn, isLoading } = useAuthStore();
 
   useEffect(() => {
@@ -23,6 +29,14 @@ export default function Home() {
       router.push('/dashboard');
     }
   }, [isLoggedIn, router]);
+
+  const particles = Array.from({ length: 30 }, (_, i) => ({
+    id: i,
+    top: Math.random() * 100 + '%',
+    left: Math.random() * 100 + '%',
+    delay: Math.random() * 5,
+    duration: 5 + Math.random() * 5,
+  }));
 
   if (isLoading) {
     return (
@@ -40,118 +54,40 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950">
-      <div className="container mx-auto px-4 py-16">
+      <div className="relative h-screen overflow-hidden">
+
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
-              <span className="text-white font-bold text-3xl">$</span>
+        <Spotlight className='-top-40 -left-10 md:-left-32 md:-top-20 h-screen' fill='var(--primary)'/>
+        <Spotlight className='top-80 left-full h-[100vh] w-[50vw]' fill='var(--accent)'/>
+        <Spotlight className='top-28 left-80 h-[80vh] w-[50vw]' fill='#64748b'/>
+        
+        <div className="flex h-screen w-full items-center justify-center bg-background absolute top-0 left-0">
+              <div
+                className={cn(
+                  "absolute inset-0",
+                  "[background-size:40px_40px]",
+                  "[background-image:linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)]",
+                  "dark:[background-image:linear-gradient(to_right,#262626_1px,transparent_1px),linear-gradient(to_bottom,#262626_1px,transparent_1px)]",
+                )}
+              />
+              {/* Radial gradient for the container to give a faded look */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-slate-950"></div>
+              <div className='flex justify-center relative my-20 z-10'>
+                <div className='max-w-[89vw] md:max-w-2xl lg:max-w-[60vw] flex flex-col items-center justify-center'>
+                  <TextGenerateEffect className='text-center text-9xl pb-3 ' words='OnlyFunds'/>
+                  <h2 className='uppercase tracking-widest sm:text-xs lg:text-xl text-center text-emerald-100'>Take control of your personal finances with simple expense tracking, budget management, and financial insights.</h2>
+
+                <Link href="/login">
+                  <GradientButton/>
+                </Link>
+
+                </div>
+              </div>
             </div>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-            OnlyFunds
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Take control of your personal finances with simple expense tracking,
-            budget management, and financial insights.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button
-              size="lg"
-              onClick={() => router.push('/signup')}
-              className="text-lg px-8 py-4 shadow-lg hover:shadow-xl"
-            >
-              Get Started Free
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => router.push('/login')}
-              className="text-lg px-8 py-4"
-            >
-              Sign In
-            </Button>
-          </div>
-        </div>
 
-        {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                </div>
-                Track Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Easily record your income and expenses with detailed categorization
-                and date tracking.
-              </p>
-            </CardContent>
-          </Card>
 
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-blue-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                Budget Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Set monthly budgets for different categories and track your
-                spending progress in real-time.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                </div>
-                Dark Mode
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Enjoy a beautiful interface with both light and dark themes
-                that adapts to your preferences.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-3xl p-12 shadow-lg">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-            Ready to take control of your finances?
-          </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who have simplified their financial management with OnlyFunds.
-          </p>
-          <Button
-            size="lg"
-            onClick={() => router.push('/signup')}
-            className="text-lg px-8 py-4 shadow-lg hover:shadow-xl"
-          >
-            Start Your Journey
-          </Button>
-        </div>
+                
+      
       </div>
-    </div>
   );
 }
