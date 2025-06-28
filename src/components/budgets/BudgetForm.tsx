@@ -24,11 +24,15 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 
 interface BudgetFormProps {
+  defaultMonth?: number;
+  defaultYear?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({
+  defaultMonth,
+  defaultYear,
   onSuccess,
   onCancel,
 }) => {
@@ -38,8 +42,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const [formData, setFormData] = useState({
     category: "",
     amount: "",
-    month: getCurrentMonth().toString(),
-    year: getCurrentYear().toString(),
+    month: (defaultMonth || getCurrentMonth()).toString(),
+    year: (defaultYear || getCurrentYear()).toString(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,12 +122,12 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         user?.id
       );
 
-      // Reset form to current month/year but keep other fields for easy re-entry
+      // Reset form to default month/year but keep other fields for easy re-entry
       setFormData({
         category: "",
         amount: "",
-        month: getCurrentMonth().toString(),
-        year: getCurrentYear().toString(),
+        month: (defaultMonth || getCurrentMonth()).toString(),
+        year: (defaultYear || getCurrentYear()).toString(),
       });
 
       onSuccess?.();

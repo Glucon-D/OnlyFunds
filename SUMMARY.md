@@ -11,8 +11,9 @@
 - **Styling**: Tailwind CSS v4
 - **State Management**: Zustand
 - **Validation**: Zod
-- **Authentication**: bcryptjs (client-side)
-- **Storage**: localStorage (Phase 1 MVP)
+- **Authentication**: Appwrite (cloud authentication)
+- **Database**: Appwrite Cloud + localStorage (hybrid storage)
+- **Storage**: localStorage (primary) + Appwrite (cloud sync)
 
 ---
 
@@ -84,10 +85,10 @@ onlyfunds/
 
 #### `/src/components/budgets/`
 
-| File             | Purpose                  | Key Features                       |
-| ---------------- | ------------------------ | ---------------------------------- |
-| `BudgetForm.tsx` | Budget creation form     | Category selection, amount setting |
-| `BudgetList.tsx` | Budget display component | Progress bars, overspending alerts |
+| File             | Purpose                  | Key Features                                                  |
+| ---------------- | ------------------------ | ------------------------------------------------------------- |
+| `BudgetForm.tsx` | Budget creation form     | Category selection, amount setting                            |
+| `BudgetList.tsx` | Budget display component | Optimized progress bars, loading states, performance-enhanced |
 
 #### `/src/components/providers/`
 
@@ -120,6 +121,7 @@ onlyfunds/
 | File            | Purpose                 | Key Features                                 |
 | --------------- | ----------------------- | -------------------------------------------- |
 | `localDb.ts`    | localStorage operations | User data, transactions, budgets persistence |
+| `appwriteDb.ts` | Appwrite database ops   | Cloud CRUD operations, data synchronization  |
 | `validation.ts` | Zod schemas             | Form validation, data sanitization           |
 | `helpers.ts`    | Common utilities        | ID generation, date formatting, calculations |
 | `cn.ts`         | Class name utility      | Tailwind class merging with clsx             |
@@ -140,6 +142,27 @@ onlyfunds/
 ---
 
 ## 🎨 Recent UI Enhancements
+
+### Optimized Budget List Component (`BudgetList.tsx`)
+
+A high-performance budget progress display component featuring:
+
+- **Optimized Calculation Function**: `calculateBudgetProgressOptimized()` with O(n) complexity using Map-based lookups
+- **Instant Updates**: useMemo-based calculations for immediate progress updates without flickering
+- **Performance Enhancements**: React.memo, useCallback, and efficient data processing
+- **Loading States**: Professional skeleton loading with staggered animations
+- **Hardware Acceleration**: CSS transforms and will-change properties for smooth animations
+- **Progress Bar Optimization**: Conditional shimmer effects, smooth transitions, minimum width handling
+- **Memory Efficient**: Eliminated debouncing timeouts and unnecessary state management
+- **Type Safety**: Full TypeScript integration with proper interfaces and error handling
+
+#### Key Performance Improvements:
+
+- **Eliminated Flickering**: Removed global CSS transitions from progress bars
+- **Instant Calculations**: No more 100ms debounce delays
+- **Efficient Algorithms**: Single-pass transaction processing with category grouping
+- **Reduced Re-renders**: Optimized React hooks and memoization
+- **Smooth Animations**: Hardware-accelerated progress bars with cubic-bezier easing
 
 ### Settings Page (`/settings/page.tsx`)
 
@@ -206,6 +229,18 @@ Global notification system using react-hot-toast:
 - **Global Access**: Available throughout the app via provider pattern
 - **Professional Design**: Dark themed with clean modern styling
 
+### Enhanced CSS Animation System (`globals.css`)
+
+Advanced animation and loading system with performance optimizations:
+
+- **Progress Bar Animations**: Hardware-accelerated progress bars with `transform: translateZ(0)` and `will-change: width`
+- **Shimmer Effects**: Optimized shimmer animations with reduced opacity and linear timing
+- **Loading Skeletons**: Professional skeleton loading with gradient backgrounds and staggered delays
+- **Selective Transitions**: Excluded progress bars from global transitions to prevent flickering
+- **Animation Classes**: `.animate-shimmer`, `.loading-skeleton`, `.skeleton-shimmer` for consistent loading states
+- **Performance CSS**: Cubic-bezier easing functions for natural-feeling animations
+- **Mobile Optimized**: Responsive animations that work smoothly across all devices
+
 ### Appwrite Configuration (`appwrite.ts`)
 
 Backend service configuration and client setup:
@@ -250,23 +285,25 @@ The application uses a centralized theme system in `globals.css`:
 
 ---
 
-## 🔐 Authentication System
+## 🔐 Authentication & Database System
 
 ### Architecture
 
-The authentication system is built with **Appwrite** as the backend service, providing:
+The system is built with **Appwrite** as the backend service, providing:
 
 - **Cloud Authentication**: Secure user management with Appwrite
 - **Session Management**: Server-side session handling
 - **OAuth Support**: Google OAuth integration
-- **Real-time Sync**: Cloud-based user data synchronization
+- **Database Integration**: Cloud storage for transactions and budgets
+- **Hybrid Storage**: localStorage for speed + Appwrite for persistence
 
 ### Flow
 
-1. **Registration**: Create Appwrite user account → Create session → Update local state
-2. **Login**: Authenticate with Appwrite → Create session → Cache user data
-3. **Session Persistence**: localStorage caching with SSR-safe fallbacks
-4. **Protection**: Route guards redirect unauthenticated users
+1. **Registration**: Create Appwrite user account → Create session → Update local state → Sync data
+2. **Login**: Authenticate with Appwrite → Create session → Cache user data → Sync from cloud
+3. **Data Operations**: Update localStorage immediately → Sync to Appwrite in background
+4. **Session Persistence**: localStorage caching with SSR-safe fallbacks
+5. **Protection**: Route guards redirect unauthenticated users
 
 ### Security Features
 
@@ -389,26 +426,39 @@ pnpm lint    # ESLint checking
 - **Loading States**: Enhanced auth loaders with gradient effects
 - **Performance Optimization**: Separated auth hooks for better re-render control
 - **SSR Support**: Server-side rendering compatibility for all components
+- **Budget Progress Optimization**: High-performance progress calculations with instant updates
+- **Animation System**: Hardware-accelerated animations with anti-flickering measures
+- **Loading Skeletons**: Professional skeleton loading states with realistic placeholders
 
-### Phase 1 Limitations
+### Current Features
 
-- **Financial Data**: Still using localStorage for transactions and budgets
-- **Single User**: No multi-user support yet
+- **Hybrid Storage**: localStorage for speed + Appwrite for cloud persistence
+- **Automatic Sync**: Data syncs between local and cloud on login
+- **Offline Support**: App works offline with localStorage
+- **Real-time Updates**: Immediate UI updates with background cloud sync
+- **Performance Optimized**: useMemo calculations, React.memo components, efficient algorithms
+- **Smooth Animations**: Hardware-accelerated progress bars with anti-flickering technology
+- **Professional Loading**: Skeleton states with staggered animations and realistic placeholders
+
+### Current Limitations
+
+- **Single User**: No multi-user support yet (per account)
 - **Basic Categories**: Predefined categories only
 - **No Exports**: No data export functionality
 - **No Recurring**: No recurring transactions
+- **Simple Conflict Resolution**: Last-write-wins approach
 
 ---
 
 ## 🔮 Future Enhancements
 
-- Cloud synchronization
-- Data export/import
-- Recurring transactions
-- Advanced analytics
-- Multi-currency support
-- Receipt scanning
-- Investment tracking
+- **Data Features**: Export/import, recurring transactions, custom categories
+- **Analytics**: Advanced reporting, spending insights, trend analysis
+- **Multi-Currency**: Support for multiple currencies with exchange rates
+- **Receipt Scanning**: OCR integration for receipt processing
+- **Investment Tracking**: Portfolio management and performance tracking
+- **Collaboration**: Shared budgets and family account management
+- **Advanced Sync**: Conflict resolution, delta sync, real-time updates
 
 ---
 
@@ -420,7 +470,45 @@ pnpm lint    # ESLint checking
 4. **Test Changes**: Verify functionality
 5. **Type Safety**: Maintain TypeScript compliance
 
+## 🚀 Setup Instructions
+
+### 1. Clone and Install Dependencies
+
+```bash
+git clone <repository-url>
+cd OnlyFunds
+npm install
+```
+
+### 2. Configure Appwrite
+
+1. Create an [Appwrite](https://cloud.appwrite.io/) project
+2. Create database with `transactions` and `budgets` collections
+3. Configure collection attributes as specified in `APPWRITE_INTEGRATION.md`
+4. Set up proper permissions for user data isolation
+
+### 3. Environment Setup
+
+```bash
+cp env.example .env.local
+```
+
+Edit `.env.local` with your Appwrite project details:
+
+- `NEXT_PUBLIC_APPWRITE_PROJECT_ID`: Your Appwrite project ID
+- `NEXT_PUBLIC_APPWRITE_DATABASE_ID`: Your database ID
+- `NEXT_PUBLIC_APPWRITE_TRANSACTIONS_COLLECTION_ID`: Transactions collection ID
+- `NEXT_PUBLIC_APPWRITE_BUDGETS_COLLECTION_ID`: Budgets collection ID
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+**Note**: The app works without Appwrite configuration (localStorage only mode) but cloud sync requires proper setup.
+
 ---
 
 **Last Updated**: 2025-01-27
-**Version**: 0.1.0 (Phase 1 MVP)
+**Version**: 0.2.1 (Performance & Animation Optimization)

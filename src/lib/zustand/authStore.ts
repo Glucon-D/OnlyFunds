@@ -5,6 +5,7 @@
  * Features instant session restoration, minimal API calls, and professional loading states.
  * Integrates with Appwrite authentication services and react-hot-toast for notifications.
  * Central store for all authentication-related state management with performance optimizations.
+ * Now includes automatic data synchronization on login.
  */
 
 import { create } from "zustand";
@@ -12,6 +13,7 @@ import { OAuthProvider } from "appwrite";
 import toast from "react-hot-toast";
 import { AuthStore, User, SignupCredentials, LoginCredentials } from "../types";
 import { account, oauthConfig, isConfigured } from "../config/appwrite";
+import { syncService } from "../utils/appwriteDb";
 
 // Session cache keys
 const SESSION_CACHE_KEY = "onlyfunds_session";
@@ -72,6 +74,20 @@ const clearSessionCache = () => {
   }
 };
 
+// Helper function to sync user data after successful authentication
+const syncUserData = async (userId: string) => {
+  try {
+    // Sync transactions and budgets from Appwrite to localStorage
+    await Promise.all([
+      syncService.syncTransactionsToLocal(userId),
+      syncService.syncBudgetsToLocal(userId),
+    ]);
+  } catch (error) {
+    console.error("Error syncing user data:", error);
+    // Don't show error to user as this is background sync
+  }
+};
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   // Initial state - try to restore from cache immediately
   user: getSessionFromCache(),
@@ -121,6 +137,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       });
 
       toast.success("Successfully signed in!", { id: loadingToast });
+
+      // Sync user data in background after successful login
+      syncUserData(user.id);
+
       return true;
     } catch (error: unknown) {
       console.error("Login error:", error);
@@ -182,6 +202,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       });
 
       toast.success("Account created successfully!", { id: loadingToast });
+
+      // Sync user data in background after successful signup
+      // (Usually no data for new users, but good to establish the pattern)
+      syncUserData(user.id);
+
       return true;
     } catch (error: unknown) {
       console.error("Signup error:", error);
@@ -310,6 +335,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoggedIn: true,
         isLoading: false,
       });
+
+      // Sync user data in background if session is restored
+      syncUserData(user.id);
     } catch (error: unknown) {
       // Clear invalid cache
       clearSessionCache();
@@ -375,6 +403,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoggedIn: true,
         isLoading: false,
       });
+
+      // Sync user data after force check
+      syncUserData(user.id);
     } catch (error: unknown) {
       clearSessionCache();
       console.error("Auth check error:", error);
