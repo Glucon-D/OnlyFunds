@@ -79,6 +79,7 @@ export const LoginForm: React.FC = () => {
       setForgotEmail("");
     } catch (error) {
       setForgotError("Failed to send reset email. Please try again.");
+      console.log("Forgot password error:", error);
     }
   };
 
