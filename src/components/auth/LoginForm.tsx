@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FcGoogle } from "react-icons/fc";
 import { Dialog } from "@/components/ui/Dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -149,13 +149,71 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-white dark:bg-gray-900 rounded-2xl">
+    <Card className="w-full max-w-md mx-auto shadow-[0_-2px_16px_0_rgba(0,0,0,0.04)] border-0 bg-white dark:bg-gray-900 rounded-2xl">
       <CardHeader className="bg-primary text-white dark:bg-primary-dark rounded-t-2xl">
-        <CardTitle className="text-center text-2xl font-bold tracking-tight">
-          Welcome Back
-        </CardTitle>
+        <div className="h-1" />
       </CardHeader>
       <CardContent className="p-8">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2 border-2 border-primary bg-[#1D293D] text-primary hover:bg-accent dark:hover:bg-gray-800 font-medium transition rounded-lg mb-6"
+          disabled={isLoading || googleLoading}
+          onClick={() => {
+            setGoogleLoading(true);
+            setGoogleError(null);
+            setGoogleLinkMessage(null);
+            window.location.href = "/api/auth/google";
+          }}
+        >
+          {googleLoading ? (
+            <svg
+              className="animate-spin h-5 w-5 text-gray-500"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              ></path>
+            </svg>
+          ) : (
+            <FcGoogle className="text-xl" />
+          )}
+          <span className="font-medium">
+            {googleLoading
+              ? "Signing in with Google..."
+              : "Sign in with Google"}
+          </span>
+        </Button>
+        {/* Divider: OR CONTINUE WITH EMAIL */}
+        <div className="flex items-center my-6">
+          <span className="flex-grow h-px bg-gray-300 dark:bg-gray-600 rounded-l-full"></span>
+          <span className="mx-4 px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-inherit rounded-full select-none opacity-60">
+            OR CONTINUE WITH EMAIL
+          </span>
+          <span className="flex-grow h-px bg-gray-300 dark:bg-gray-600 rounded-r-full"></span>
+        </div>
+        {googleError && (
+          <div className="text-sm text-red-600 dark:text-red-400 text-center mt-2">
+            {googleError}
+          </div>
+        )}
+        {googleLinkMessage && (
+          <div className="text-sm text-yellow-600 dark:text-yellow-400 text-center mt-2">
+            {googleLinkMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             type="email"
@@ -229,59 +287,6 @@ export const LoginForm: React.FC = () => {
           >
             {isLoading ? "Signing In..." : "Sign In"}
           </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2 border-2 border-primary bg-white dark:bg-gray-900 text-primary hover:bg-accent dark:hover:bg-gray-800 font-medium transition rounded-lg"
-            disabled={isLoading || googleLoading}
-            onClick={() => {
-              setGoogleLoading(true);
-              setGoogleError(null);
-              setGoogleLinkMessage(null);
-              window.location.href = "/api/auth/google";
-            }}
-          >
-            {googleLoading ? (
-              <svg
-                className="animate-spin h-5 w-5 text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                ></path>
-              </svg>
-            ) : (
-              <FcGoogle className="text-xl" />
-            )}
-            <span className="font-medium">
-              {googleLoading
-                ? "Signing in with Google..."
-                : "Sign in with Google"}
-            </span>
-          </Button>
-
-          {googleError && (
-            <div className="text-sm text-red-600 dark:text-red-400 text-center mt-2">
-              {googleError}
-            </div>
-          )}
-          {googleLinkMessage && (
-            <div className="text-sm text-yellow-600 dark:text-yellow-400 text-center mt-2">
-              {googleLinkMessage}
-            </div>
-          )}
 
           <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
             Don&apos;t have an account?{" "}
