@@ -7,27 +7,27 @@
  */
 
 export enum TransactionType {
-  EXPENSE = 'expense',
-  INCOME = 'income'
+  EXPENSE = "expense",
+  INCOME = "income",
 }
 
 export enum ExpenseCategory {
-  FOOD = 'food',
-  TRANSPORTATION = 'transportation',
-  ENTERTAINMENT = 'entertainment',
-  UTILITIES = 'utilities',
-  HEALTHCARE = 'healthcare',
-  SHOPPING = 'shopping',
-  EDUCATION = 'education',
-  OTHER = 'other'
+  FOOD = "food",
+  TRANSPORTATION = "transportation",
+  ENTERTAINMENT = "entertainment",
+  UTILITIES = "utilities",
+  HEALTHCARE = "healthcare",
+  SHOPPING = "shopping",
+  EDUCATION = "education",
+  OTHER = "other",
 }
 
 export enum IncomeCategory {
-  SALARY = 'salary',
-  FREELANCE = 'freelance',
-  INVESTMENT = 'investment',
-  GIFT = 'gift',
-  OTHER = 'other'
+  SALARY = "salary",
+  FREELANCE = "freelance",
+  INVESTMENT = "investment",
+  GIFT = "gift",
+  OTHER = "other",
 }
 
 export interface Transaction {
@@ -47,13 +47,22 @@ export interface ExpenseState {
 }
 
 export interface ExpenseActions {
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'userId' | 'createdAt'>, userId?: string) => void;
-  fetchTransactions: (userId?: string) => void;
-  deleteTransaction: (id: string) => void;
+  addTransaction: (
+    transaction: Omit<Transaction, "id" | "userId" | "createdAt">,
+    userId?: string
+  ) => Promise<void>;
+  fetchTransactions: (userId?: string) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
   getTransactionsByType: (type: TransactionType) => Transaction[];
-  getTransactionsByCategory: (category: ExpenseCategory | IncomeCategory) => Transaction[];
+  getTransactionsByCategory: (
+    category: ExpenseCategory | IncomeCategory
+  ) => Transaction[];
   getTotalByType: (type: TransactionType) => number;
-  getMonthlyTotal: (type: TransactionType, month?: number, year?: number) => number;
+  getMonthlyTotal: (
+    type: TransactionType,
+    month?: number,
+    year?: number
+  ) => number;
 }
 
 export type ExpenseStore = ExpenseState & ExpenseActions;

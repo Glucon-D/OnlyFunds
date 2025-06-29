@@ -1,26 +1,31 @@
 /**
- * Login Form Component - Modern Greenish Theme
+ * Login Form Component - Modern Enhanced Design
  *
- * Modern, clean, and professional login form using a green color palette.
- * Supports both light and dark mode. Uses reusable UI components.
+ * Redesigned with modern UI/UX, proper animations, and enhanced visual appeal.
+ * Features gradient backgrounds, smooth transitions, and interactive elements.
  */
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/zustand";
+import { useAuthState, useAuthActions } from "@/lib/hooks/useAuth";
 import { loginSchema, type LoginFormData } from "@/lib/utils/validation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Checkbox } from "@/components/ui/Checkbox";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { Dialog } from "@/components/ui/Dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const { isLoading } = useAuthState();
+  const { login, loginWithGoogle } = useAuthActions();
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -31,14 +36,17 @@ export const LoginForm: React.FC = () => {
   const [googleLinkMessage, setGoogleLinkMessage] = useState<string | null>(
     null
   );
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [submitError, setSubmitError] = useState<string>("");
-  const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotError, setForgotError] = useState("");
-  const [forgotSuccess, setForgotSuccess] = useState("");
+
+  // Reset form states
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   // Handle Google OAuth errors from redirect
   useEffect(() => {
@@ -57,29 +65,35 @@ export const LoginForm: React.FC = () => {
     }
   }, []);
 
-  const validateForgotEmail = (email: string) =>
+  const validateResetEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleForgotSubmit = async (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setForgotError("");
-    setForgotSuccess("");
+    setResetError("");
+    setResetSuccess("");
+    setResetLoading(true);
 
-    if (!validateForgotEmail(forgotEmail)) {
-      setForgotError("Please enter a valid email address.");
+    if (!validateResetEmail(resetEmail)) {
+      setResetError("Please enter a valid email address.");
+      setResetLoading(false);
       return;
     }
 
     try {
       // TODO: Integrate with your auth system's forgot password endpoint
-      // Example: await forgotPassword(forgotEmail);
-      setForgotSuccess(
-        "If this email is registered, a reset link has been sent."
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setResetSuccess(
+        "If this email is registered, a reset link has been sent to your inbox."
       );
-      setForgotEmail("");
+      setResetEmail("");
     } catch (error) {
-      setForgotError("Failed to send reset email. Please try again.");
-      console.log("Forgot password error:", error);
+      setResetError("Failed to send reset email. Please try again.");
+      console.log("Reset password error:", error);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -95,258 +109,359 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleRememberMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRememberMe(e.target.checked);
-  };
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSubmitError("");
+      setSuccess(false);
 
-  const validateForm = (): boolean => {
-    try {
-      loginSchema.parse(formData);
-      setErrors({});
-      return true;
-    } catch (error: unknown) {
-      const fieldErrors: Partial<LoginFormData> = {};
+      const validateForm = (): boolean => {
+        try {
+          loginSchema.parse(formData);
+          setErrors({});
+          return true;
+        } catch (error: unknown) {
+          const fieldErrors: Partial<LoginFormData> = {};
 
-      if (error && typeof error === "object" && "errors" in error) {
-        (
-          error as { errors: Array<{ path?: string[]; message: string }> }
-        ).errors.forEach((err) => {
-          if (err.path && err.path[0]) {
-            fieldErrors[err.path[0] as keyof LoginFormData] = err.message;
+          if (error && typeof error === "object" && "errors" in error) {
+            (
+              error as { errors: Array<{ path?: string[]; message: string }> }
+            ).errors.forEach((err) => {
+              if (err.path && err.path[0]) {
+                fieldErrors[err.path[0] as keyof LoginFormData] = err.message;
+              }
+            });
           }
-        });
+
+          setErrors(fieldErrors);
+          return false;
+        }
+      };
+
+      if (!validateForm()) {
+        return;
       }
 
-      setErrors(fieldErrors);
-      return false;
-    }
+      try {
+        const successResult = await login(formData);
+
+        if (successResult) {
+          setSuccess(true);
+          router.push("/dashboard");
+        } else {
+          setSubmitError("Invalid email or password. Please try again.");
+        }
+      } catch {
+        setSubmitError("An error occurred during login. Please try again.");
+      }
+    },
+    [formData, login, router]
+  );
+
+  const handleBackToLogin = () => {
+    setIsResetMode(false);
+    setResetEmail("");
+    setResetError("");
+    setResetSuccess("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleShowResetForm = () => {
+    setIsResetMode(true);
+    // Clear any login form states
     setSubmitError("");
-    setSuccess(false);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      const successResult = await login(formData);
-
-      if (successResult) {
-        setSuccess(true); // Show success state
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1200); // Show success for 1.2s before redirect
-      } else {
-        setSubmitError("Invalid email or password. Please try again.");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setSubmitError("An error occurred during login. Please try again.");
-    }
+    setGoogleError(null);
+    setGoogleLinkMessage(null);
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-white dark:bg-gray-900 rounded-2xl">
-      <CardHeader className="bg-primary text-white dark:bg-primary-dark rounded-t-2xl">
-        <CardTitle className="text-center text-2xl font-bold tracking-tight">
-          Welcome Back
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            type="email"
-            name="email"
-            label="Email *"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleInputChange}
-            error={errors.email}
-            disabled={isLoading}
-            autoComplete="email"
-          />
-
-          <Input
-            type="password"
-            name="password"
-            label="Password *"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={handleInputChange}
-            error={errors.password}
-            disabled={isLoading}
-            autoComplete="current-password"
-          />
-
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2 group">
-              <Checkbox
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={handleRememberMeChange}
-                disabled={isLoading}
-                className="accent-primary transition-transform duration-150 group-hover:scale-105"
-              />
-              <label
-                htmlFor="rememberMe"
-                className="text-sm text-gray-700 dark:text-gray-300 select-none transition-transform transition-colors duration-150 group-hover:scale-105 group-hover:text-green-600 dark:group-hover:text-green-400 cursor-pointer"
-                style={{ willChange: "transform" }}
-              >
-                Remember me
-              </label>
-            </div>
-            <button
-              type="button"
-              className="text-xs text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
-              style={{ willChange: "transform" }}
-              onClick={() => setForgotOpen(true)}
-              disabled={isLoading}
-            >
-              Forgot password?
-            </button>
+    <div className="min-h-screen flex justify-center py-10">
+      <div className="w-full max-w-md">
+        {/* Main Card */}
+        <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 overflow-hidden">
+          {/* Header */}
+          <div className="text-center py-8 px-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-green-700 to-emerald-600 dark:from-green-400 dark:via-green-500 dark:to-emerald-400 bg-clip-text text-transparent mb-2">
+              {isResetMode ? "Reset Password" : "Login"}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-300 text-sm">
+              {isResetMode
+                ? "Enter your email address and we'll send you a reset link"
+                : "Welcome back to OnlyFunds! Please enter your details."}
+            </p>
           </div>
 
-          {success && (
-            <div className="text-sm text-primary-dark bg-accent rounded p-2 text-center mt-2">
-              Login successful! Redirecting...
-            </div>
-          )}
+          {/* Form Container */}
+          <div className="px-8 pb-8">
+            {!isResetMode ? (
+              /* Login Form */
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email Input */}
+                <div className="group">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 transition-colors duration-200 group-focus-within:text-green-600 dark:group-focus-within:text-green-400">
+                    <Mail className="w-4 h-4 inline mr-2" />
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="you@example.com"
+                      disabled={isLoading}
+                      className={`w-full px-4 py-3 pl-12 border rounded-xl bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white dark:focus:bg-slate-700 ${
+                        errors.email
+                          ? "border-red-300 dark:border-red-600"
+                          : "border-slate-200 dark:border-slate-600"
+                      }`}
+                      autoComplete="email"
+                    />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors duration-200 group-focus-within:text-green-500" />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full transition-colors duration-200 group-focus-within:bg-green-500"></div>
+                    </div>
+                  </div>
+                  {errors.email && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
 
-          {submitError && (
-            <div className="text-sm text-red-600 dark:text-red-400 text-center">
-              {submitError}
-            </div>
-          )}
+                {/* Password Input */}
+                <div className="group">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 transition-colors duration-200 group-focus-within:text-green-600 dark:group-focus-within:text-green-400">
+                    <Lock className="w-4 h-4 inline mr-2" />
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="••••••••"
+                      disabled={isLoading}
+                      className={`w-full px-4 py-3 pl-12 pr-12 border rounded-xl bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white dark:focus:bg-slate-700 ${
+                        errors.password
+                          ? "border-red-300 dark:border-red-600"
+                          : "border-slate-200 dark:border-slate-600"
+                      }`}
+                      autoComplete="current-password"
+                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors duration-200 group-focus-within:text-green-500" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-200 focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
 
-          <Button
-            type="submit"
-            className="w-full py-2 rounded-lg font-semibold bg-primary text-white hover:bg-primary-dark transition shadow"
-            isLoading={isLoading}
-            disabled={isLoading}
-          >
-            {isLoading ? "Signing In..." : "Sign In"}
-          </Button>
+                {/* Success Message */}
+                {success && (
+                  <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    ✓ Login successful! Redirecting...
+                  </div>
+                )}
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2 border-2 border-primary bg-white dark:bg-gray-900 text-primary hover:bg-accent dark:hover:bg-gray-800 font-medium transition rounded-lg"
-            disabled={isLoading || googleLoading}
-            onClick={() => {
-              setGoogleLoading(true);
-              setGoogleError(null);
-              setGoogleLinkMessage(null);
-              window.location.href = "/api/auth/google";
-            }}
-          >
-            {googleLoading ? (
-              <svg
-                className="animate-spin h-5 w-5 text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                ></path>
-              </svg>
+                {/* Error Message */}
+                {submitError && (
+                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Google Error/Link Messages */}
+                {googleError && (
+                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    {googleError}
+                  </div>
+                )}
+                {googleLinkMessage && (
+                  <div className="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    {googleLinkMessage}
+                  </div>
+                )}
+
+                {/* Login Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 group"
+                >
+                  <span className="flex items-center justify-center space-x-2">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Signing In...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Login</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                      </>
+                    )}
+                  </span>
+                </button>
+
+                <div className="flex items-center justify-center">
+                  <div className="w-full h-px bg-slate-200 dark:bg-slate-700"></div>
+                  <span className="text-sm text-slate-500 dark:text-slate-400 px-2">
+                    OR
+                  </span>
+                  <div className="w-full h-px bg-slate-200 dark:bg-slate-700"></div>
+                </div>
+
+                {/* Google Sign In Button */}
+                <button
+                  type="button"
+                  disabled={isLoading || googleLoading}
+                  onClick={async () => {
+                    setGoogleLoading(true);
+                    setGoogleError(null);
+                    setGoogleLinkMessage(null);
+
+                    try {
+                      await loginWithGoogle();
+                    } catch {
+                      setGoogleError("Failed to login with Google");
+                      setGoogleLoading(false);
+                    }
+                  }}
+                  className="w-full py-3 px-4 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+                >
+                  <span className="flex items-center justify-center space-x-3">
+                    {googleLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Signing in with Google...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FcGoogle className="w-5 h-5" />
+                        <span>Sign in with Google</span>
+                      </>
+                    )}
+                  </span>
+                </button>
+
+                {/* Forgot Password Link */}
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={handleShowResetForm}
+                    disabled={isLoading}
+                    className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors duration-200 focus:outline-none hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+
+                {/* Sign Up Link */}
+                <div className="text-center ">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Don&apos;t have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => router.push("/signup")}
+                      disabled={isLoading}
+                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-semibold transition-colors duration-200 focus:outline-none hover:underline"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                </div>
+              </form>
             ) : (
-              <FcGoogle className="text-xl" />
-            )}
-            <span className="font-medium">
-              {googleLoading
-                ? "Signing in with Google..."
-                : "Sign in with Google"}
-            </span>
-          </Button>
+              /* Reset Password Form */
+              <form onSubmit={handleResetSubmit} className="space-y-6">
+                {/* Reset Email Input */}
+                <div className="group">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 transition-colors duration-200 group-focus-within:text-green-600 dark:group-focus-within:text-green-400">
+                    <Mail className="w-4 h-4 inline mr-2" />
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="Enter your registered email"
+                      disabled={resetLoading}
+                      className="w-full px-4 py-3 pl-12 border border-slate-200 dark:border-slate-600 rounded-xl bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white dark:focus:bg-slate-700"
+                      autoComplete="email"
+                    />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors duration-200 group-focus-within:text-green-500" />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full transition-colors duration-200 group-focus-within:bg-green-500"></div>
+                    </div>
+                  </div>
+                </div>
 
-          {googleError && (
-            <div className="text-sm text-red-600 dark:text-red-400 text-center mt-2">
-              {googleError}
-            </div>
-          )}
-          {googleLinkMessage && (
-            <div className="text-sm text-yellow-600 dark:text-yellow-400 text-center mt-2">
-              {googleLinkMessage}
-            </div>
-          )}
+                {/* Reset Error Message */}
+                {resetError && (
+                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    {resetError}
+                  </div>
+                )}
 
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-            Don&apos;t have an account?{" "}
-            <button
-              type="button"
-              onClick={() => router.push("/signup")}
-              className="text-primary font-medium transition-transform transition-colors duration-150 hover:scale-105 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
-              disabled={isLoading}
-            >
-              Sign up
-            </button>
-          </div>
-        </form>
-      </CardContent>
+                {/* Reset Success Message */}
+                {resetSuccess && (
+                  <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-center animate-fade-in">
+                    ✓ {resetSuccess}
+                  </div>
+                )}
 
-      {/* Forgot Password Modal */}
-      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
-        <div className="p-6 bg-white dark:bg-gray-900 rounded shadow max-w-sm w-full mx-auto">
-          <h2 className="text-lg font-semibold mb-2 text-center">
-            Reset Password
-          </h2>
-          <form onSubmit={handleForgotSubmit} className="space-y-3">
-            <Input
-              type="email"
-              name="forgotEmail"
-              label="Email"
-              placeholder="Enter your registered email"
-              value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-              disabled={isLoading}
-              autoComplete="email"
-            />
-            {forgotError && (
-              <div className="text-sm text-red-600 dark:text-red-400">
-                {forgotError}
-              </div>
+                {/* Reset Button */}
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 group"
+                >
+                  <span className="flex items-center justify-center space-x-2">
+                    {resetLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending Reset Link...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Reset Link</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                      </>
+                    )}
+                  </span>
+                </button>
+
+                {/* Back to Login Link */}
+                <div className="text-center pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={handleBackToLogin}
+                    disabled={resetLoading}
+                    className="inline-flex items-center space-x-2 text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors duration-200 focus:outline-none hover:underline"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Login</span>
+                  </button>
+                </div>
+              </form>
             )}
-            {forgotSuccess && (
-              <div className="text-sm text-green-600 dark:text-green-400">
-                {forgotSuccess}
-              </div>
-            )}
-            <div className="flex justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-gray-600 dark:text-gray-300"
-                onClick={() => setForgotOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="font-medium"
-                disabled={isLoading}
-              >
-                Send Reset Link
-              </Button>
-            </div>
-          </form>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-            Enter your email and we’ll send you a password reset link.
           </div>
         </div>
-      </Dialog>
-    </Card>
+      </div>
+    </div>
   );
 };

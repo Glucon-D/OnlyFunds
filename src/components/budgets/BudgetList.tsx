@@ -9,22 +9,115 @@
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { useBudgetStore, useExpenseStore, useAuthStore } from "@/lib/zustand";
+import { formatCurrency, getCategoryDisplayName } from "@/lib/utils/helpers";
 import {
-  formatCurrency,
-  getCategoryDisplayName,
-  getBudgetProgressBgColor,
-} from "@/lib/utils/helpers";
-import { ExpenseCategory } from "@/lib/types";
+  ExpenseCategory,
+  Budget,
+  Transaction,
+  BudgetProgress,
+  TransactionType,
+} from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import {
+  getCurrentMonth,
+  getCurrentYear,
+  getMonthName,
+} from "@/lib/utils/helpers";
 
-export const BudgetList: React.FC = () => {
-  const { budgetProgress, fetchBudgets, calculateBudgetProgress } =
-    useBudgetStore();
-  const { transactions, fetchTransactions } = useExpenseStore();
+// Optimized function to calculate budget progress
+const calculateBudgetProgressOptimized = (
+  budgets: Budget[],
+  transactions: Transaction[],
+  month?: number,
+  year?: number
+): BudgetProgress[] => {
+  const targetMonth = month || getCurrentMonth();
+  const targetYear = year || getCurrentYear();
+
+  // Filter budgets for current month/year first
+  const currentBudgets = budgets.filter(
+    (b) => b.month === targetMonth && b.year === targetYear
+  );
+
+  if (currentBudgets.length === 0) return [];
+
+  // Create a map for faster transaction lookup by category
+  const expensesByCategory = new Map<ExpenseCategory, number>();
+
+  // Filter and group transactions in a single pass
+  transactions.forEach((transaction) => {
+    if (transaction.type !== TransactionType.EXPENSE) return;
+
+    const transactionDate = new Date(transaction.date);
+    if (
+      transactionDate.getMonth() + 1 !== targetMonth ||
+      transactionDate.getFullYear() !== targetYear
+    )
+      return;
+
+    const category = transaction.category as ExpenseCategory;
+    const currentAmount = expensesByCategory.get(category) || 0;
+    expensesByCategory.set(category, currentAmount + transaction.amount);
+  });
+
+  // Calculate progress for each budget
+  return currentBudgets.map((budget) => {
+    const spentAmount = expensesByCategory.get(budget.category) || 0;
+    const remainingAmount = budget.amount - spentAmount;
+    const percentageUsed =
+      budget.amount > 0 ? Math.round((spentAmount / budget.amount) * 100) : 0;
+
+    return {
+      category: budget.category,
+      budgetAmount: budget.amount,
+      spentAmount,
+      remainingAmount,
+      percentageUsed,
+      isOverBudget: spentAmount > budget.amount,
+    };
+  });
+};
+
+interface BudgetListProps {
+  selectedMonth?: number;
+  selectedYear?: number;
+}
+
+const BudgetListComponent: React.FC<BudgetListProps> = ({
+  selectedMonth,
+  selectedYear,
+}) => {
+  const { budgets, fetchBudgets, isLoading: budgetsLoading } = useBudgetStore();
+  const {
+    transactions,
+    fetchTransactions,
+    isLoading: transactionsLoading,
+  } = useExpenseStore();
   const { user } = useAuthStore();
+
+  // Calculate budget progress using useMemo for optimal performance
+  const budgetProgress = useMemo(() => {
+    return calculateBudgetProgressOptimized(
+      budgets,
+      transactions,
+      selectedMonth,
+      selectedYear
+    );
+  }, [budgets, transactions, selectedMonth, selectedYear]);
+
+  // Check if we're still loading or calculating
+  const isLoading = budgetsLoading || transactionsLoading;
+
+  // Debug logging (commented out for performance)
+  // console.log("BudgetList render:", {
+  //   budgetsCount: budgets.length,
+  //   transactionsCount: transactions.length,
+  //   budgetProgressCount: budgetProgress.length,
+  //   userId: user?.id,
+  // });
 
   useEffect(() => {
     if (user?.id) {
@@ -33,24 +126,95 @@ export const BudgetList: React.FC = () => {
     }
   }, [fetchBudgets, fetchTransactions, user?.id]);
 
-  useEffect(() => {
-    // Recalculate budget progress when transactions change
-    calculateBudgetProgress(transactions);
-  }, [transactions, calculateBudgetProgress]);
+  const handleDeleteBudget = useCallback(
+    (category: ExpenseCategory) => {
+      if (
+        window.confirm(
+          `Are you sure you want to delete the budget for ${getCategoryDisplayName(
+            category
+          )}?`
+        )
+      ) {
+        // Find the budget to delete
+        const budgetToDelete = budgets.find(
+          (b) =>
+            b.category === category &&
+            b.month === (selectedMonth || getCurrentMonth()) &&
+            b.year === (selectedYear || getCurrentYear())
+        );
 
-  const handleDeleteBudget = (category: ExpenseCategory) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete the budget for ${getCategoryDisplayName(
-          category
-        )}?`
-      )
-    ) {
-      // This is a simplified approach - in a real app, you'd want to pass the budget ID
-      // For now, we'll need to modify the store to handle deletion by category/month/year
-      console.log("Delete budget for category:", category);
-    }
-  };
+        if (budgetToDelete) {
+          // Delete budget using the store's delete function
+          // Note: You'll need to implement deleteBudget in the store if not already available
+          console.log(
+            "Delete budget for category:",
+            category,
+            "ID:",
+            budgetToDelete.id
+          );
+        }
+      }
+    },
+    [budgets, selectedMonth, selectedYear]
+  );
+
+  // Show loader while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Loading skeleton for budget cards */}
+        {[1, 2, 3].map((index) => (
+          <Card
+            key={index}
+            className="w-full border-l-4 border-slate-300 dark:border-slate-600 loading-skeleton"
+            style={{ animationDelay: `${index * 200}ms` }}
+          >
+            <CardHeader className="pb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-2xl"></div>
+                  <div>
+                    <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-32 mb-2"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
+                  </div>
+                </div>
+                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-6">
+              {/* Stats skeleton */}
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((statIndex) => (
+                  <div
+                    key={statIndex}
+                    className="text-center p-4 bg-slate-100 dark:bg-slate-800 rounded-xl"
+                  >
+                    <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-lg mx-auto mb-2"></div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-12 mx-auto mb-2"></div>
+                    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-16 mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar skeleton */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32"></div>
+                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-slate-300 to-slate-400 dark:from-slate-600 dark:to-slate-500 rounded-full animate-pulse"
+                    style={{ width: `${40 + index * 15}%` }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   if (budgetProgress.length === 0) {
     return (
@@ -83,8 +247,14 @@ export const BudgetList: React.FC = () => {
                 No Budgets Set Yet
               </h3>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-lg mx-auto leading-relaxed">
-                Create your first budget to start tracking your spending and
-                take control of your financial future
+                {selectedMonth &&
+                selectedYear &&
+                (selectedMonth !== getCurrentMonth() ||
+                  selectedYear !== getCurrentYear())
+                  ? `No budgets found for ${getMonthName(
+                      selectedMonth
+                    )} ${selectedYear}. Create a budget for this period to start tracking your spending.`
+                  : "Create your first budget to start tracking your spending and take control of your financial future"}
               </p>
 
               <div className="flex flex-col items-center space-y-4">
@@ -422,22 +592,36 @@ export const BudgetList: React.FC = () => {
                       : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                   }`}
                 >
-                  {progress.percentageUsed}%
+                  {progress.percentageUsed || 0}%
                 </span>
               </div>
 
               <div className="relative">
                 <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden shadow-inner">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden ${getBudgetProgressBgColor(
-                      progress.percentageUsed
-                    )}`}
+                    className={`h-full rounded-full progress-bar relative overflow-hidden ${
+                      progress.isOverBudget
+                        ? "bg-gradient-to-r from-red-500 to-red-600"
+                        : progress.percentageUsed > 80
+                        ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                        : progress.percentageUsed > 60
+                        ? "bg-gradient-to-r from-blue-500 to-blue-600"
+                        : "bg-gradient-to-r from-emerald-500 to-green-500"
+                    }`}
                     style={{
-                      width: `${Math.min(progress.percentageUsed, 100)}%`,
+                      width: `${Math.min(
+                        Math.max(progress.percentageUsed || 0, 0),
+                        100
+                      )}%`,
+                      transition:
+                        "width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                      minWidth: progress.spentAmount > 0 ? "4px" : "0px",
                     }}
                   >
-                    {/* Animated shimmer effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                    {/* Animated shimmer effect - only show when progress > 3% to avoid flickering */}
+                    {progress.percentageUsed > 3 && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-shimmer"></div>
+                    )}
                   </div>
                 </div>
                 {/* Progress markers */}
@@ -530,3 +714,7 @@ export const BudgetList: React.FC = () => {
     </div>
   );
 };
+
+BudgetListComponent.displayName = "BudgetList";
+
+export const BudgetList = React.memo(BudgetListComponent);
