@@ -6,7 +6,7 @@
  * it shows the application features and provides links to login and signup.
  */
 
-'use client';
+"use client";
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -37,7 +37,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [isLoggedIn, router]);
 
@@ -50,14 +50,7 @@ export default function Home() {
   }));
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <AuthPageLoader message="Checking authentication..." />;
   }
 
   if (isLoggedIn) {
