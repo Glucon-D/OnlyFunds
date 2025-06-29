@@ -5,16 +5,24 @@
  * Handles adding, fetching, deleting transactions, and provides utility methods
  * for filtering and calculating totals by type, category, and time period.
  * Central store for all transaction-related state management.
+ * Now supports both localStorage and Appwrite cloud storage.
  */
 
-import { create } from 'zustand';
-import { ExpenseStore, Transaction, TransactionType, ExpenseCategory, IncomeCategory } from '../types';
+import { create } from "zustand";
+import {
+  ExpenseStore,
+  Transaction,
+  TransactionType,
+  ExpenseCategory,
+  IncomeCategory,
+} from "../types";
 import {
   getTransactionsByUserId,
   addTransaction as addTransactionToDb,
-  deleteTransaction as deleteTransactionFromDb
-} from '../utils/localDb';
-import { generateId, getCurrentMonth, getCurrentYear } from '../utils/helpers';
+  deleteTransaction as deleteTransactionFromDb,
+} from "../utils/localDb";
+import { appwriteTransactionService, syncService } from "../utils/appwriteDb";
+import { generateId, getCurrentMonth, getCurrentYear } from "../utils/helpers";
 
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   // Initial state
@@ -22,10 +30,10 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   isLoading: false,
 
   // Actions
-  addTransaction: (transactionData, userId?: string) => {
+  addTransaction: async (transactionData, userId?: string) => {
     // userId will be passed from components that have access to auth store
     if (!userId) {
-      console.error('No user ID provided');
+      console.error("No user ID provided");
       return;
     }
 
@@ -33,19 +41,27 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       id: generateId(),
       userId: userId,
       ...transactionData,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
-    // Add to local database
+    // Add to local database first (for immediate UI update)
     addTransactionToDb(transaction);
 
-    // Update state
-    set(state => ({
-      transactions: [...state.transactions, transaction]
+    // Update state immediately
+    set((state) => ({
+      transactions: [...state.transactions, transaction],
     }));
+
+    // Then sync to Appwrite in the background
+    try {
+      await appwriteTransactionService.createTransaction(transaction);
+    } catch (error) {
+      console.error("Failed to sync transaction to Appwrite:", error);
+      // Note: Transaction is still saved locally, so user doesn't lose data
+    }
   },
 
-  fetchTransactions: (userId?: string) => {
+  fetchTransactions: async (userId?: string) => {
     set({ isLoading: true });
 
     try {
@@ -54,46 +70,71 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         return;
       }
 
+      // First, try to get data from localStorage (fast)
       const userTransactions = getTransactionsByUserId(userId);
-      
+
+      // Update state with local data immediately
       set({
         transactions: userTransactions,
-        isLoading: false
+        isLoading: false,
       });
+
+      // Then, sync with Appwrite in the background (if configured)
+      try {
+        await syncService.syncTransactionsToLocal(userId);
+
+        // Refresh local data after sync
+        const syncedTransactions = getTransactionsByUserId(userId);
+        set({
+          transactions: syncedTransactions,
+          isLoading: false,
+        });
+      } catch (error) {
+        console.error("Failed to sync transactions from Appwrite:", error);
+        // Local data is still available, so continue normally
+      }
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
       set({ isLoading: false });
     }
   },
 
-  deleteTransaction: (id: string) => {
+  deleteTransaction: async (id: string) => {
     try {
-      // Remove from local database
+      // Remove from local database first (for immediate UI update)
       deleteTransactionFromDb(id);
 
-      // Update state
-      set(state => ({
-        transactions: state.transactions.filter(t => t.id !== id)
+      // Update state immediately
+      set((state) => ({
+        transactions: state.transactions.filter((t) => t.id !== id),
       }));
+
+      // Then sync to Appwrite in the background
+      try {
+        await appwriteTransactionService.deleteTransaction(id);
+      } catch (error) {
+        console.error("Failed to delete transaction from Appwrite:", error);
+        // Note: Transaction is still deleted locally
+      }
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      console.error("Error deleting transaction:", error);
     }
   },
 
   getTransactionsByType: (type: TransactionType) => {
     const { transactions } = get();
-    return transactions.filter(t => t.type === type);
+    return transactions.filter((t) => t.type === type);
   },
 
   getTransactionsByCategory: (category: ExpenseCategory | IncomeCategory) => {
     const { transactions } = get();
-    return transactions.filter(t => t.category === category);
+    return transactions.filter((t) => t.category === category);
   },
 
   getTotalByType: (type: TransactionType) => {
     const { transactions } = get();
     return transactions
-      .filter(t => t.type === type)
+      .filter((t) => t.type === type)
       .reduce((total, t) => total + t.amount, 0);
   },
 
@@ -103,7 +144,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const targetYear = year || getCurrentYear();
 
     return transactions
-      .filter(t => {
+      .filter((t) => {
         const transactionDate = new Date(t.date);
         return (
           t.type === type &&
@@ -112,5 +153,5 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         );
       })
       .reduce((total, t) => total + t.amount, 0);
-  }
+  },
 }));

@@ -13,6 +13,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import ToastProvider from "@/components/providers/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OnlyFunds - Personal Finance Made Simple",
-  description: "Track your expenses, manage budgets, and take control of your personal finances with OnlyFunds.",
+  description:
+    "Track your expenses, manage budgets, and take control of your personal finances with OnlyFunds.",
 };
 
 export default function RootLayout({
@@ -38,16 +40,18 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+        style={{
+          backgroundColor: "var(--background)",
+          color: "var(--foreground)",
+        }}
       >
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-1 pt-20">
-              {children}
-            </main>
+            <main className="flex-1 pt-20">{children}</main>
             <Footer />
           </div>
+          <ToastProvider />
         </AuthProvider>
       </body>
     </html>

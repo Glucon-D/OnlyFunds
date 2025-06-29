@@ -34,8 +34,10 @@ export interface SignupCredentials {
 export interface AuthActions {
   login: (credentials: LoginCredentials) => Promise<boolean>;
   signup: (credentials: SignupCredentials) => Promise<boolean>;
-  logout: () => void;
-  checkAuthStatus: () => void;
+  loginWithGoogle: () => Promise<boolean>;
+  logout: () => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
+  forceCheckAuthStatus: () => Promise<void>;
 }
 
 export type AuthStore = AuthState & AuthActions;
