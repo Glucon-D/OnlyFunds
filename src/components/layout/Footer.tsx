@@ -9,7 +9,7 @@
 "use client";
 
 import React from "react";
-import { Github, Twitter, Mail, AlertTriangle } from "lucide-react";
+import { Github, Twitter, Mail, AlertTriangle, ChartColumnBig } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Footer: React.FC = () => {
@@ -72,7 +72,7 @@ export const Footer: React.FC = () => {
             {/* Left side - Brand and copyright */}
             <motion.div className="flex items-center space-x-4 lg:space-x-5" variants={brandVariants}>
               <motion.div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg" variants={itemVariants} whileTap="tap" whileHover="hover">
-                <span className="text-white font-bold text-lg lg:text-2xl">$</span>
+                <ChartColumnBig className="w-7 h-7 lg:w-9 lg:h-9 text-white drop-shadow-lg" />
               </motion.div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 lg:space-x-4">
                 <motion.span className="text-base lg:text-lg font-semibold text-slate-700 dark:text-slate-200" variants={itemVariants}>
@@ -92,7 +92,7 @@ export const Footer: React.FC = () => {
               {/* Report Bug Button */}
               <motion.button
                 onClick={handleReportBug}
-                className="flex items-center border-2 border-red-500 bg-red-100/60 dark:bg-red-900/40 space-x-2 p-2 lg:p-3 rounded-xl text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 hover:text-white dark:hover:text-white shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 transform hover:scale-110 focus:scale-110 h-10 lg:h-12 min-w-[44px] justify-center"
+                className="flex items-center border-2 border-red-500 bg-red-100/60 dark:bg-red-900/40 space-x-2 p-2 lg:p-3 rounded-xl text-sm font-semibold text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 shadow-md transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 transform hover:scale-110 focus:scale-110 h-10 lg:h-12 min-w-[44px] justify-center"
                 aria-label="Report a bug"
                 variants={itemVariants}
                 whileTap="tap"
@@ -101,7 +101,7 @@ export const Footer: React.FC = () => {
                 <span className="flex items-center justify-center w-5 h-5 lg:w-6 lg:h-6">
                   <AlertTriangle className="w-4 h-4 lg:w-5 lg:h-5 text-red-500 group-hover:scale-125 group-focus:scale-125 transition-transform duration-200" />
                 </span>
-                <span className="inline leading-none">Report Bug</span>
+                <span className="inline leading-none group-hover:text-red-500 dark:group-hover:text-white">Report Bug</span>
               </motion.button>
 
               {/* Separator */}
