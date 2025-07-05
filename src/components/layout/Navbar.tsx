@@ -600,12 +600,11 @@ export const Navbar: React.FC = () => {
 
                   {/* Mobile Navigation Links */}
                   <div className="py-2">
-                    {navLinks.map((link, index) => (
+                    {navLinks.map((link) => (
                       <motion.div
                         key={link.href}
                         variants={navItemVariants}
                         whileHover="hover"
-                        custom={index}
                       >
                         <Link
                           href={link.href}
@@ -769,7 +768,7 @@ export const Navbar: React.FC = () => {
             </motion.div>
             {/* Navigation Links */}
             <div className="py-2">
-              {navLinks.map((link, index) => (
+              {navLinks.map((link) => (
                 <motion.div
                   key={link.href}
                   variants={navItemVariants}

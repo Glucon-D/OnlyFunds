@@ -10,7 +10,7 @@
 
 import React from "react";
 import { Github, Twitter, Mail, AlertTriangle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
