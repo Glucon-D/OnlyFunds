@@ -14,6 +14,28 @@ import { useAuthStore } from "@/lib/zustand";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { AuthPageLoader } from "@/components/ui/AuthLoader";
+import { motion, Variants } from "framer-motion";
+import { ParticlesComponent } from "@/components/ui/Particles";
+import Carousel from "@/components/ui/Carousel";
+import {
+  FiDollarSign,
+  FiArrowRight,
+  FiCheckCircle,
+  FiTrendingUp,
+  FiCloud,
+  FiZap,
+  FiShield,
+  FiTarget,
+  FiEye,
+} from "react-icons/fi";
+import {
+  SiNextdotjs,
+  SiTypescript,
+  SiTailwindcss,
+  SiAppwrite,
+  SiZod,
+} from "react-icons/si";
+import { BsLightningChargeFill } from "react-icons/bs";
 
 export default function Home() {
   const router = useRouter();
@@ -33,149 +55,264 @@ export default function Home() {
     return null; // Will redirect to dashboard
   }
 
+  const sectionVariants: Variants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (i = 1) => ({
+      opacity: 1,
+      y: 0,
+      transition: { staggerChildren: 0.2, delayChildren: i * 0.1 },
+    }),
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const features = [
+    {
+      icon: FiCloud,
+      title: "Cloud Sync & Offline Mode",
+      description:
+        "Your data is always safe and available. Work offline and sync seamlessly to the cloud with Appwrite integration.",
+    },
+    {
+      icon: FiZap,
+      title: "Blazingly Fast",
+      description:
+        "Engineered for speed with a performance-first approach, featuring optimized components and instant calculations.",
+    },
+    {
+      icon: FiShield,
+      title: "Secure by Design",
+      description:
+        "Rely on robust, server-side authentication from Appwrite and data validation with Zod to keep your information safe.",
+    },
+    {
+      icon: FiTarget,
+      title: "Advanced Budgeting",
+      description:
+        "Create, manage, and track monthly budgets with high-performance progress bars and instant updates.",
+    },
+    {
+      icon: FiTrendingUp,
+      title: "Insightful Analytics",
+      description:
+        "Gain a deeper understanding of your spending habits with detailed reports and trend analysis. (Coming Soon)",
+    },
+    {
+      icon: FiEye,
+      title: "Modern & Intuitive UI",
+      description:
+        "Enjoy a beautiful, responsive interface with light and dark modes, designed for a seamless user experience.",
+    },
+  ];
+
+  const techStack = [
+    { icon: SiNextdotjs, name: "Next.js 15" },
+    { icon: SiTypescript, name: "TypeScript" },
+    { icon: SiTailwindcss, name: "Tailwind CSS v4" },
+    { icon: SiAppwrite, name: "Appwrite" },
+    { icon: BsLightningChargeFill, name: "Zustand" },
+    { icon: SiZod, name: "Zod" },
+  ];
+
+  const testimonials = [
+    {
+      quote:
+        "OnlyFunds has been a game-changer for my finances. I finally feel in control of my spending.",
+      author: "Alex P.",
+    },
+    {
+      quote:
+        "The best finance app I've ever used. It's simple, beautiful, and incredibly effective.",
+      author: "Sarah K.",
+    },
+    {
+      quote:
+        "I love how easy it is to track my expenses and see where my money is going. Highly recommend!",
+      author: "John D.",
+    },
+    {
+      quote:
+        "The budgeting features are fantastic. I've saved so much since I started using OnlyFunds.",
+      author: "Emily R.",
+    },
+    {
+      quote:
+        "Finally, a finance app that doesn't overcomplicate things. Clean, intuitive, and powerful.",
+      author: "Michael B.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950">
-      <div className="container mx-auto px-4 py-16">
+    <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 overflow-x-hidden">
+      <ParticlesComponent id="tsparticles" />
+      <div className="relative z-10 container mx-auto px-4 py-20">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
-              <span className="text-white font-bold text-3xl">$</span>
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          animate="visible"
+          className="text-center mb-32"
+        >
+          <motion.div
+            variants={itemVariants}
+            className="flex justify-center mb-8"
+          >
+            <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/20">
+              <FiDollarSign className="text-white text-6xl" />
             </div>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-            OnlyFunds
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Take control of your personal finances with simple expense tracking,
-            budget management, and financial insights.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+          </motion.div>
+          <motion.h1
+            variants={itemVariants}
+            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-emerald-500 to-green-600 bg-clip-text text-transparent"
+          >
+            Welcome to OnlyFunds
+          </motion.h1>
+          <motion.p
+            variants={itemVariants}
+            className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed"
+          >
+            The simple, elegant, and powerful way to manage your personal
+            finances. Gain clarity and take control of your financial future.
+          </motion.p>
+          <motion.div variants={itemVariants}>
             <Button
               size="lg"
+              variant="primary"
               onClick={() => router.push("/signup")}
-              className="text-lg px-8 py-4 shadow-lg hover:shadow-xl"
             >
-              Get Started Free
+              Get Started for Free <FiArrowRight className="ml-2" />
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => router.push("/login")}
-              className="text-lg px-8 py-4"
-            >
-              Sign In
-            </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.section>
 
         {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
-                </div>
-                Track Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Easily record your income and expenses with detailed
-                categorization and date tracking.
-              </p>
-            </CardContent>
-          </Card>
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mb-32"
+        >
+          <h2 className="text-4xl font-bold text-center mb-6">
+            A Smarter Way to Manage Your Money
+          </h2>
+          <p className="text-lg text-slate-600 dark:text-slate-400 text-center mb-16 max-w-2xl mx-auto">
+            OnlyFunds is packed with features designed to give you clarity and
+            control over your finances.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+              <motion.div variants={itemVariants} key={i}>
+                <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 h-full p-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-2xl">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center mr-4 shadow-md">
+                        <feature.icon className="w-6 h-6 text-white" />
+                      </div>
+                      {feature.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
 
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-blue-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
+        {/* Tech Stack Section */}
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mb-32"
+        >
+          <h2 className="text-4xl font-bold text-center mb-6">
+            Built with a Modern Tech Stack
+          </h2>
+          <p className="text-lg text-slate-600 dark:text-slate-400 text-center mb-16 max-w-2xl mx-auto">
+            We use cutting-edge technology to deliver a fast, reliable, and
+            secure experience.
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-6">
+            {techStack.map((tech, i) => (
+              <motion.div
+                variants={itemVariants}
+                key={i}
+                className="flex flex-col items-center justify-center gap-2 text-center"
+              >
+                <div className="w-20 h-20 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+                  <tech.icon className="text-4xl text-emerald-500" />
                 </div>
-                Budget Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Set monthly budgets for different categories and track your
-                spending progress in real-time.
-              </p>
-            </CardContent>
-          </Card>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {tech.name}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
 
-          <Card className="hover:scale-105 transition-transform duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                </div>
-                Dark Mode
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-300">
-                Enjoy a beautiful interface with both light and dark themes that
-                adapts to your preferences.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Testimonials Section */}
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="mb-32"
+        >
+          <h2 className="text-4xl font-bold text-center mb-16">
+            What Our Users Say
+          </h2>
+          <Carousel testimonials={testimonials} />
+        </motion.section>
 
         {/* CTA Section */}
-        <div className="text-center bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-3xl p-12 shadow-lg">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-            Ready to take control of your finances?
-          </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who have simplified their financial
-            management with OnlyFunds.
-          </p>
-          <Button
-            size="lg"
-            onClick={() => router.push("/signup")}
-            className="text-lg px-8 py-4 shadow-lg hover:shadow-xl"
-          >
-            Start Your Journey
-          </Button>
-        </div>
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <div className="bg-gradient-to-r from-emerald-400/20 to-green-400/20 dark:from-emerald-900/30 dark:to-green-900/30 rounded-3xl p-16 shadow-xl border border-emerald-200/50 dark:border-emerald-800/50">
+            <motion.h2
+              variants={itemVariants}
+              className="text-4xl font-bold text-slate-900 dark:text-white mb-6"
+            >
+              Ready to Build Your Financial Future?
+            </motion.h2>
+            <motion.p
+              variants={itemVariants}
+              className="text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto"
+            >
+              Take the first step towards financial freedom. It&apos;s free to
+              get started.
+            </motion.p>
+            <motion.div variants={itemVariants}>
+              <Button
+                size="lg"
+                variant="primary"
+                onClick={() => router.push("/signup")}
+              >
+                Sign Up Now <FiCheckCircle className="ml-2" />
+              </Button>
+            </motion.div>
+          </div>
+        </motion.section>
       </div>
     </div>
   );
