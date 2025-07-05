@@ -230,7 +230,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="mx-auto max-w-2xl rounded-2xl px-6 py-4 bg-gradient-to-r from-emerald-400/90 via-green-400/80 to-emerald-600/90 shadow-lg border border-emerald-200 dark:border-emerald-800 text-white text-center text-lg md:text-xl font-semibold flex items-center justify-center min-h-[64px]"
+            className="mx-auto max-w-2xl rounded-2xl px-6 py-4 bg-emerald-50 text-emerald-800 dark:bg-gradient-to-r dark:from-emerald-400/90 dark:via-green-400/80 dark:to-emerald-600/90 dark:text-white shadow-lg border border-emerald-200 dark:border-emerald-800 text-center text-lg md:text-xl font-semibold flex items-center justify-center min-h-[64px]"
             style={{ letterSpacing: 0.1 }}
           >
             <span className="inline-block animate-pulse mr-3">💡</span>
@@ -255,12 +255,12 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-700 bg-clip-text text-transparent drop-shadow-lg"
+            className="text-4xl md:text-5xl font-extrabold mb-3 text-emerald-800 dark:text-emerald-400 drop-shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
           >
-            Welcome back, <span className="bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">{user?.username}</span>!
+            Welcome back, <span>{user?.username}</span>!
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-slate-600 dark:text-slate-300 font-medium"
@@ -419,35 +419,7 @@ export default function DashboardPage() {
             Quick Actions
           </motion.h2>
 
-          <div className="flex flex-wrap gap-4">
-            {/* Add Transaction Button */}
-            <motion.button
-              onClick={() => setShowExpenseForm(true)}
-              className="group relative overflow-hidden px-6 py-3 rounded-lg text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium bg-gradient-to-r from-emerald-500 to-green-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
-              initial="hidden"
-              animate="visible"
-              variants={quickActionBtnVariants}
-              custom={0}
-              whileHover="hover"
-            >
-              <div className="flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Add Transaction
-              </div>
-            </motion.button>
-
+          <div className="flex gap-3 w-full">
             {/* Enhanced Dropdown Menu */}
             <div
               className="relative"
@@ -483,9 +455,7 @@ export default function DashboardPage() {
                   </svg>
                   More Actions
                   <svg
-                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${
-                      showQuickActions ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${showQuickActions ? "rotate-180" : ""}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -635,6 +605,34 @@ export default function DashboardPage() {
                 </motion.div>
               )}
             </div>
+
+            {/* Add Transaction Button */}
+            <motion.button
+              onClick={() => setShowExpenseForm(true)}
+              className="group relative overflow-hidden px-4 py-3 rounded-lg text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium bg-gradient-to-r from-emerald-500 to-green-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
+              initial="hidden"
+              animate="visible"
+              variants={quickActionBtnVariants}
+              custom={0}
+              whileHover="hover"
+            >
+              <div className="flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Add Transaction
+              </div>
+            </motion.button>
           </div>
         </div>
 
