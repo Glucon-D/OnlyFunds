@@ -153,7 +153,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       <div
         ref={contentRef}
         className={cn(
-          "absolute z-50 transition-all duration-300 transform origin-top",
+          "absolute z-50 transition-all duration-300 transform origin-top overflow-hidden",
           getPlacementClasses(),
           {
             "opacity-100 scale-100 translate-y-0 pointer-events-auto": isOpen,
@@ -198,7 +198,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
       className={cn(
         "w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50",
         {
-          "hover:scale-[1.02] cursor-pointer": !disabled,
+          "cursor-pointer": !disabled,
           "opacity-50 cursor-not-allowed": disabled,
         },
         className
@@ -207,18 +207,16 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
       onMouseEnter={(e) => {
         if (!disabled) {
           e.currentTarget.style.backgroundColor = "var(--card-hover)";
-          e.currentTarget.style.transform = "translateX(4px)";
         }
       }}
       onMouseLeave={(e) => {
         if (!disabled) {
           e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.transform = "translateX(0px)";
         }
       }}
     >
       {icon && (
-        <div className="mr-3 group-hover:scale-110 transition-transform duration-200">
+        <div className="mr-3 transition-transform duration-200">
           {icon}
         </div>
       )}

@@ -309,7 +309,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                 className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
                 style={{ color: "var(--foreground-secondary)" }}
               >
-                <span className="text-lg font-medium">$</span>
+                <span className="text-lg font-medium">₹</span>
               </div>
               <Input
                 type="number"
