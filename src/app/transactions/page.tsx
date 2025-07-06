@@ -1152,7 +1152,7 @@ export default function TransactionsPage() {
                 {filteredAndSortedTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className={`relative flex items-center justify-between p-4 rounded-xl border bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow hover:shadow-xl hover:bg-gray-100 dark:hover:bg-slate-900 hover:scale-[1.01] transition-all duration-300 group ${
+                    className={`relative flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-xl border bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow hover:shadow-xl hover:bg-gray-100 dark:hover:bg-slate-900 hover:scale-[1.01] transition-all duration-300 group ${
                       transaction.type === TransactionType.INCOME
                         ? "hover:border-emerald-500"
                         : "hover:border-red-500"
@@ -1166,10 +1166,10 @@ export default function TransactionsPage() {
                           : "bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-red-950 from-slate-100 via-red-50 to-red-200"
                       }`}
                     ></div>
-                    <div className="flex items-center gap-4 flex-1 relative z-10">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 relative z-10 w-full">
                       {/* Transaction Type Icon */}
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto sm:mx-0"
                         style={{
                           backgroundColor:
                             transaction.type === TransactionType.INCOME
@@ -1184,9 +1184,9 @@ export default function TransactionsPage() {
                         )}
                       </div>
 
-                      {/* Transaction Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
+                      {/* Transaction Details & Amount */}
+                      <div className="flex flex-col w-full">
+                        <div className="flex flex-row items-center justify-between w-full mb-1">
                           <h4
                             className="font-semibold text-lg truncate"
                             style={{ color: "var(--foreground)" }}
@@ -1194,7 +1194,7 @@ export default function TransactionsPage() {
                             {transaction.description}
                           </h4>
                           <span
-                            className="text-xl font-bold"
+                            className="text-xl font-bold ml-2"
                             style={{
                               color:
                                 transaction.type === TransactionType.INCOME
@@ -1202,14 +1202,11 @@ export default function TransactionsPage() {
                                   : "var(--error)",
                             }}
                           >
-                            {transaction.type === TransactionType.INCOME
-                              ? "+"
-                              : "-"}
+                            {transaction.type === TransactionType.INCOME ? "+" : "-"}
                             {formatCurrency(transaction.amount)}
                           </span>
                         </div>
-
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-row items-center justify-between text-sm mt-1 sm:justify-start sm:gap-4">
                           <span
                             className="flex items-center gap-1"
                             style={{ color: "var(--foreground-secondary)" }}
@@ -1232,7 +1229,7 @@ export default function TransactionsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteTransaction(transaction)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="mt-2 sm:mt-0 sm:ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 self-end"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
