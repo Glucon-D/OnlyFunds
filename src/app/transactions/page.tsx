@@ -67,6 +67,13 @@ type SortOption =
   | "description-asc";
 type FilterOption = "all" | "income" | "expense";
 
+/**
+ * Displays the professional transactions management page with advanced filtering, sorting, search, and statistics for authenticated users.
+ *
+ * Redirects unauthenticated users to the login page. Fetches and displays the user's transactions, provides summary statistics, and allows filtering by type, category, date range, and search term. Supports sorting, adding new transactions via a modal form, and deleting transactions with confirmation. Handles loading and empty states with appropriate UI feedback.
+ *
+ * @returns The rendered transactions management page UI.
+ */
 export default function TransactionsPage() {
   const router = useRouter();
   const { user, isLoggedIn, isLoading } = useAuthStore();

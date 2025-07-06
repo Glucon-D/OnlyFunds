@@ -24,6 +24,11 @@ import {
   getMonthName,
 } from "@/lib/utils/helpers";
 
+/**
+ * Renders the main budget management page with authentication protection, animated period selection dropdowns, budget summary statistics, and budget creation functionality.
+ *
+ * Displays a dashboard for authenticated users to view, filter, and manage budgets by month and year. Provides animated dropdown menus for period selection, summary cards for total budget, spending, and over-budget counts, and a modal form for creating new budgets. Redirects unauthenticated users to the login page.
+ */
 export default function BudgetsPage() {
   const router = useRouter();
   const { user, isLoggedIn, isLoading } = useAuthStore();
