@@ -9,7 +9,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useBudgetStore, useAuthStore } from "@/lib/zustand";
 import { budgetFormSchema } from "@/lib/utils/validation";
 import {
@@ -78,91 +78,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     };
   }, [onCancel]);
 
-  // Optimized dropdown handlers for category selection
-  const handleCategoryDropdownEnter = useCallback(() => {
-    if (categoryDropdownTimeoutRef.current) {
-      clearTimeout(categoryDropdownTimeoutRef.current);
-      categoryDropdownTimeoutRef.current = null;
-    }
-    setShowCategoryDropdown(true);
-  }, []);
-
-  const handleCategoryDropdownLeave = useCallback(() => {
-    categoryDropdownTimeoutRef.current = setTimeout(() => {
-      setShowCategoryDropdown(false);
-    }, 150);
-  }, []);
-
-  const closeCategoryDropdown = useCallback(() => {
-    setShowCategoryDropdown(false);
-    if (categoryDropdownTimeoutRef.current) {
-      clearTimeout(categoryDropdownTimeoutRef.current);
-      categoryDropdownTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Optimized dropdown handlers for month selection
-  const handleMonthDropdownEnter = useCallback(() => {
-    if (monthDropdownTimeoutRef.current) {
-      clearTimeout(monthDropdownTimeoutRef.current);
-      monthDropdownTimeoutRef.current = null;
-    }
-    setShowMonthDropdown(true);
-  }, []);
-
-  const handleMonthDropdownLeave = useCallback(() => {
-    monthDropdownTimeoutRef.current = setTimeout(() => {
-      setShowMonthDropdown(false);
-    }, 150);
-  }, []);
-
-  const closeMonthDropdown = useCallback(() => {
-    setShowMonthDropdown(false);
-    if (monthDropdownTimeoutRef.current) {
-      clearTimeout(monthDropdownTimeoutRef.current);
-      monthDropdownTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Optimized dropdown handlers for year selection
-  const handleYearDropdownEnter = useCallback(() => {
-    if (yearDropdownTimeoutRef.current) {
-      clearTimeout(yearDropdownTimeoutRef.current);
-      yearDropdownTimeoutRef.current = null;
-    }
-    setShowYearDropdown(true);
-  }, []);
-
-  const handleYearDropdownLeave = useCallback(() => {
-    yearDropdownTimeoutRef.current = setTimeout(() => {
-      setShowYearDropdown(false);
-    }, 150);
-  }, []);
-
-  const closeYearDropdown = useCallback(() => {
-    setShowYearDropdown(false);
-    if (yearDropdownTimeoutRef.current) {
-      clearTimeout(yearDropdownTimeoutRef.current);
-      yearDropdownTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeCategoryDropdown();
-        closeMonthDropdown();
-        closeYearDropdown();
-      }
-    };
-
-    if (showCategoryDropdown || showMonthDropdown || showYearDropdown) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [showCategoryDropdown, showMonthDropdown, showYearDropdown, closeCategoryDropdown, closeMonthDropdown, closeYearDropdown]);
-
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -172,7 +87,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         !categoryDropdownRef.current.contains(event.target as Node) &&
         !categoryTriggerRef.current.contains(event.target as Node)
       ) {
-        closeCategoryDropdown();
+        setShowCategoryDropdown(false);
       }
       if (
         monthDropdownRef.current &&
@@ -180,7 +95,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         !monthDropdownRef.current.contains(event.target as Node) &&
         !monthTriggerRef.current.contains(event.target as Node)
       ) {
-        closeMonthDropdown();
+        setShowMonthDropdown(false);
       }
       if (
         yearDropdownRef.current &&
@@ -188,7 +103,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         !yearDropdownRef.current.contains(event.target as Node) &&
         !yearTriggerRef.current.contains(event.target as Node)
       ) {
-        closeYearDropdown();
+        setShowYearDropdown(false);
       }
     };
 
@@ -197,7 +112,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showCategoryDropdown, showMonthDropdown, showYearDropdown, closeCategoryDropdown, closeMonthDropdown, closeYearDropdown]);
+  }, [showCategoryDropdown, showMonthDropdown, showYearDropdown]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -446,7 +361,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         type="button"
                         onClick={() => {
                           setFormData(prev => ({ ...prev, category: option.value }));
-                          closeCategoryDropdown();
+                          setShowCategoryDropdown(false);
                           if (errors.category) {
                             setErrors(prev => ({ ...prev, category: "" }));
                           }
@@ -611,7 +526,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             type="button"
                             onClick={() => {
                               setFormData(prev => ({ ...prev, month: option.value.toString() }));
-                              closeMonthDropdown();
+                              setShowMonthDropdown(false);
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               formData.month === option.value.toString()
@@ -694,7 +609,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             type="button"
                             onClick={() => {
                               setFormData(prev => ({ ...prev, year: option.value.toString() }));
-                              closeYearDropdown();
+                              setShowYearDropdown(false);
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               formData.year === option.value.toString()

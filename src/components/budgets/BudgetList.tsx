@@ -9,7 +9,7 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useBudgetStore, useExpenseStore, useAuthStore } from "@/lib/zustand";
 import { formatCurrency, getCategoryDisplayName } from "@/lib/utils/helpers";
 import {
@@ -158,7 +158,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
         toast.success(
           `Budget for ${getCategoryDisplayName(category)} deleted successfully.`
         );
-      } catch (error) {
+      } catch {
         toast.error("Failed to delete budget. Please try again.");
       }
     }

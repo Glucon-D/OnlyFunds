@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useBudgetStore, useExpenseStore } from "@/lib/zustand";
 import { Button } from "@/components/ui/Button";
@@ -68,58 +68,12 @@ export default function BudgetsPage() {
     }
   }, [selectedMonth, selectedYear, transactions, calculateBudgetProgress]);
 
-  // Optimized dropdown handlers for month selection
-  const handleMonthDropdownEnter = useCallback(() => {
-    if (monthDropdownTimeoutRef.current) {
-      clearTimeout(monthDropdownTimeoutRef.current);
-      monthDropdownTimeoutRef.current = null;
-    }
-    setShowMonthDropdown(true);
-  }, []);
-
-  const handleMonthDropdownLeave = useCallback(() => {
-    monthDropdownTimeoutRef.current = setTimeout(() => {
-      setShowMonthDropdown(false);
-    }, 150);
-  }, []);
-
-  const closeMonthDropdown = useCallback(() => {
-    setShowMonthDropdown(false);
-    if (monthDropdownTimeoutRef.current) {
-      clearTimeout(monthDropdownTimeoutRef.current);
-      monthDropdownTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Optimized dropdown handlers for year selection
-  const handleYearDropdownEnter = useCallback(() => {
-    if (yearDropdownTimeoutRef.current) {
-      clearTimeout(yearDropdownTimeoutRef.current);
-      yearDropdownTimeoutRef.current = null;
-    }
-    setShowYearDropdown(true);
-  }, []);
-
-  const handleYearDropdownLeave = useCallback(() => {
-    yearDropdownTimeoutRef.current = setTimeout(() => {
-      setShowYearDropdown(false);
-    }, 150);
-  }, []);
-
-  const closeYearDropdown = useCallback(() => {
-    setShowYearDropdown(false);
-    if (yearDropdownTimeoutRef.current) {
-      clearTimeout(yearDropdownTimeoutRef.current);
-      yearDropdownTimeoutRef.current = null;
-    }
-  }, []);
-
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        closeMonthDropdown();
-        closeYearDropdown();
+        setShowMonthDropdown(false);
+        setShowYearDropdown(false);
       }
     };
 
@@ -127,7 +81,7 @@ export default function BudgetsPage() {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [showMonthDropdown, showYearDropdown, closeMonthDropdown, closeYearDropdown]);
+  }, [showMonthDropdown, showYearDropdown]);
 
   // Handle click outside
   useEffect(() => {
@@ -138,7 +92,7 @@ export default function BudgetsPage() {
         !monthDropdownRef.current.contains(event.target as Node) &&
         !monthTriggerRef.current.contains(event.target as Node)
       ) {
-        closeMonthDropdown();
+        setShowMonthDropdown(false);
       }
       if (
         yearDropdownRef.current &&
@@ -146,7 +100,7 @@ export default function BudgetsPage() {
         !yearDropdownRef.current.contains(event.target as Node) &&
         !yearTriggerRef.current.contains(event.target as Node)
       ) {
-        closeYearDropdown();
+        setShowYearDropdown(false);
       }
     };
 
@@ -155,7 +109,7 @@ export default function BudgetsPage() {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showMonthDropdown, showYearDropdown, closeMonthDropdown, closeYearDropdown]);
+  }, [showMonthDropdown, showYearDropdown]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -471,7 +425,7 @@ export default function BudgetsPage() {
                             key={option.value}
                             onClick={() => {
                               setSelectedMonth(option.value);
-                              closeMonthDropdown();
+                              setShowMonthDropdown(false);
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               selectedMonth === option.value
@@ -561,7 +515,7 @@ export default function BudgetsPage() {
                             key={option.value}
                             onClick={() => {
                               setSelectedYear(option.value);
-                              closeYearDropdown();
+                              setShowYearDropdown(false);
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               selectedYear === option.value

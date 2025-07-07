@@ -41,24 +41,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = useCallback(() => {
-    if (disabled) return;
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setIsOpen(true);
-  }, [disabled]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (disabled) return;
-
-    timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150);
-  }, [disabled]);
-
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
     if (timeoutRef.current) {
