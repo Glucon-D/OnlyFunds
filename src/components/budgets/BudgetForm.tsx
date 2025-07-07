@@ -381,19 +381,15 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               Category
             </label>
             
-            <div
-              className="relative"
-              onMouseEnter={handleCategoryDropdownEnter}
-              onMouseLeave={handleCategoryDropdownLeave}
-            >
+            <div className="relative">
               <motion.button
                 ref={categoryTriggerRef}
                 type="button"
-                className={`w-full px-4 py-3 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 bg-white/80 dark:bg-slate-800/80 border-emerald-200 dark:border-emerald-800 text-left ${
+                className={`w-full px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-left ${
                   formData.category 
                     ? "text-slate-800 dark:text-slate-100" 
                     : "text-slate-500 dark:text-slate-400"
-                } ${errors.category ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                } ${showCategoryDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'} ${errors.category ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 aria-expanded={showCategoryDropdown}
                 aria-haspopup="true"
@@ -434,17 +430,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                   </svg>
                 </div>
               </motion.button>
-
-              {/* Invisible bridge to prevent hover gap issues */}
-              <div
-                className={`absolute top-full left-0 w-full h-2 ${
-                  showCategoryDropdown ? "block" : "hidden"
-                }`}
-                onMouseEnter={handleCategoryDropdownEnter}
-                onMouseLeave={handleCategoryDropdownLeave}
-              />
-
-              {/* Category Dropdown Menu */}
               {showCategoryDropdown && (
                 <motion.div
                   ref={categoryDropdownRef}
@@ -453,8 +438,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                   animate="visible"
                   exit="exit"
                   variants={dropdownMenuVariants}
-                  onMouseEnter={handleCategoryDropdownEnter}
-                  onMouseLeave={handleCategoryDropdownLeave}
                 >
                   <div className="p-2 max-h-60 overflow-y-auto">
                     {categoryOptions.map((option, index) => (
@@ -582,15 +565,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   Month
                 </label>
-                <div
-                  className="relative"
-                  onMouseEnter={handleMonthDropdownEnter}
-                  onMouseLeave={handleMonthDropdownLeave}
-                >
+                <div className="relative">
                   <motion.button
                     ref={monthTriggerRef}
                     type="button"
-                    className="w-full px-3 py-2 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 bg-white/80 dark:bg-slate-800/80 border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-100 text-left"
+                    className={`w-full px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-left ${showMonthDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
                     onClick={() => setShowMonthDropdown(!showMonthDropdown)}
                     aria-expanded={showMonthDropdown}
                     aria-haspopup="true"
@@ -616,17 +595,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       </svg>
                     </div>
                   </motion.button>
-
-                  {/* Invisible bridge to prevent hover gap issues */}
-                  <div
-                    className={`absolute top-full left-0 w-full h-2 ${
-                      showMonthDropdown ? "block" : "hidden"
-                    }`}
-                    onMouseEnter={handleMonthDropdownEnter}
-                    onMouseLeave={handleMonthDropdownLeave}
-                  />
-
-                  {/* Month Dropdown Menu */}
                   {showMonthDropdown && (
                     <motion.div
                       ref={monthDropdownRef}
@@ -635,8 +603,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
-                      onMouseEnter={handleMonthDropdownEnter}
-                      onMouseLeave={handleMonthDropdownLeave}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {monthOptions.map((option, index) => (
@@ -682,15 +648,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   Year
                 </label>
-                <div
-                  className="relative"
-                  onMouseEnter={handleYearDropdownEnter}
-                  onMouseLeave={handleYearDropdownLeave}
-                >
+                <div className="relative">
                   <motion.button
                     ref={yearTriggerRef}
                     type="button"
-                    className="w-full px-3 py-2 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 bg-white/80 dark:bg-slate-800/80 border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-100 text-left"
+                    className={`w-full px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-left ${showYearDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
                     onClick={() => setShowYearDropdown(!showYearDropdown)}
                     aria-expanded={showYearDropdown}
                     aria-haspopup="true"
@@ -716,17 +678,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       </svg>
                     </div>
                   </motion.button>
-
-                  {/* Invisible bridge to prevent hover gap issues */}
-                  <div
-                    className={`absolute top-full left-0 w-full h-2 ${
-                      showYearDropdown ? "block" : "hidden"
-                    }`}
-                    onMouseEnter={handleYearDropdownEnter}
-                    onMouseLeave={handleYearDropdownLeave}
-                  />
-
-                  {/* Year Dropdown Menu */}
                   {showYearDropdown && (
                     <motion.div
                       ref={yearDropdownRef}
@@ -735,8 +686,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
-                      onMouseEnter={handleYearDropdownEnter}
-                      onMouseLeave={handleYearDropdownLeave}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {yearOptions.map((option, index) => (

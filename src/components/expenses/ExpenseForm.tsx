@@ -287,11 +287,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               disabled={isSubmitting}
               onFocus={() => setFocusedField("type")}
               onBlur={() => setFocusedField(null)}
-              className={`transition-all duration-300 ${
-                focusedField === "type"
-                  ? "ring-2 ring-emerald-500 ring-opacity-50"
-                  : ""
-              }`}
+              className="transition-all duration-300"
             />
           </div>
 

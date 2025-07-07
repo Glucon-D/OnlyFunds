@@ -81,6 +81,10 @@ export default function TransactionsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [dateRange, setDateRange] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -464,19 +468,20 @@ export default function TransactionsPage() {
                   variant="outline"
                   size="sm"
                   disabled={isRefreshing}
-                  className="flex items-center gap-2 w-full sm:w-auto"
+                  className="flex items-center justify-center gap-3 sm:gap-2 w-full sm:w-auto h-10 px-3"
                 >
                   <RefreshCw
-                    className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
+                    className={`w-5 h-5 -translate-x-1 sm:translate-x-0 ${isRefreshing ? "animate-spin" : ""}`}
                   />
-                  Refresh
+                  <span className="inline-block align-middle">Refresh</span>
                 </Button>
                 <Button
                   onClick={() => setShowExpenseForm(true)}
-                  className="flex items-center gap-2 w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-500 hover:border-emerald-200 py-3 px-4 sm:py-2 sm:px-3 text-sm sm:text-base"
+                  size="sm"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto h-10 px-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-500 hover:border-emerald-200 text-xs sm:text-sm"
                 >
                   <Plus className="w-5 h-5" />
-                  Add Transaction
+                  <span className="inline-block align-middle">Add Transaction</span>
                 </Button>
               </div>
             </div>
@@ -513,7 +518,8 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className="dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm border rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 border-[var(--border)]"
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${typeDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  onClick={() => setTypeDropdownOpen((open) => !open)}
                 >
                   <div className="flex items-center gap-2">
                     {typeFilter === "all" && (
@@ -633,7 +639,8 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className="dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm border rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 border-[var(--border)]"
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${categoryDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  onClick={() => setCategoryDropdownOpen((open) => !open)}
                 >
                   <div className="flex items-center gap-2">
                     <Tag
@@ -721,7 +728,8 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className="dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm border rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 border-[var(--border)]"
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${dateDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  onClick={() => setDateDropdownOpen((open) => !open)}
                 >
                   <div className="flex items-center gap-2">
                     <Clock
@@ -878,7 +886,8 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className="dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm border rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 border-[var(--border)]"
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${sortDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  onClick={() => setSortDropdownOpen((open) => !open)}
                 >
                   <div className="flex items-center gap-2">
                     {(sortBy === "date-desc" || sortBy === "date-asc") && (

@@ -338,7 +338,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
       {budgetProgress.map((progress, index) => (
         <Card
           key={progress.category}
-          className="group w-full hover:shadow-2xl transition-all duration-500 border-l-4 bg-gradient-to-tl from-white via-white to-slate-50/30 dark:from-emerald-950 dark:via-slate-900 dark:to-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:scale-[1.02] animate-fade-in-up"
+          className="group w-full hover:shadow-2xl transition-all duration-500 border-l-4 bg-gradient-to-tl from-white via-white to-slate-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:scale-[1.02] animate-fade-in-up"
           style={{
             borderLeftColor: progress.isOverBudget
               ? "#ef4444"
@@ -350,7 +350,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
         >
           <div className="relative">
             {/* Dark overlay on hover */}
-            <div className="pointer-events-none absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-gray-100 via-gray-50 to-gray-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 rounded-2xl" />
+            <div className="pointer-events-none absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-slate-900 dark:via-gray-900 dark:to-emerald-950 rounded-2xl" />
             <div className="relative z-20">
               <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">

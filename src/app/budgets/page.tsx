@@ -413,14 +413,10 @@ export default function BudgetsPage() {
 
               <div className="flex items-center gap-3">
                 {/* Month Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={handleMonthDropdownEnter}
-                  onMouseLeave={handleMonthDropdownLeave}
-                >
+                <div className="relative">
                   <motion.button
                     ref={monthTriggerRef}
-                    className="group px-4 py-2 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 bg-white/80 dark:bg-slate-800/80 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 min-w-[140px]"
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[140px] ${showMonthDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
                     onClick={() => setShowMonthDropdown(!showMonthDropdown)}
                     aria-expanded={showMonthDropdown}
                     aria-haspopup="true"
@@ -460,17 +456,6 @@ export default function BudgetsPage() {
                       </svg>
                     </div>
                   </motion.button>
-
-                  {/* Invisible bridge to prevent hover gap issues */}
-                  <div
-                    className={`absolute top-full left-0 w-full h-2 ${
-                      showMonthDropdown ? "block" : "hidden"
-                    }`}
-                    onMouseEnter={handleMonthDropdownEnter}
-                    onMouseLeave={handleMonthDropdownLeave}
-                  />
-
-                  {/* Month Dropdown Menu */}
                   {showMonthDropdown && (
                     <motion.div
                       ref={monthDropdownRef}
@@ -479,8 +464,6 @@ export default function BudgetsPage() {
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
-                      onMouseEnter={handleMonthDropdownEnter}
-                      onMouseLeave={handleMonthDropdownLeave}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {monthOptions.map((option, index) => (
@@ -520,14 +503,10 @@ export default function BudgetsPage() {
                 </div>
 
                 {/* Year Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={handleYearDropdownEnter}
-                  onMouseLeave={handleYearDropdownLeave}
-                >
+                <div className="relative">
                   <motion.button
                     ref={yearTriggerRef}
-                    className="group px-4 py-2 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 bg-white/80 dark:bg-slate-800/80 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 min-w-[100px]"
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[100px] ${showYearDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
                     onClick={() => setShowYearDropdown(!showYearDropdown)}
                     aria-expanded={showYearDropdown}
                     aria-haspopup="true"
@@ -567,17 +546,6 @@ export default function BudgetsPage() {
                       </svg>
                     </div>
                   </motion.button>
-
-                  {/* Invisible bridge to prevent hover gap issues */}
-                  <div
-                    className={`absolute top-full left-0 w-full h-2 ${
-                      showYearDropdown ? "block" : "hidden"
-                    }`}
-                    onMouseEnter={handleYearDropdownEnter}
-                    onMouseLeave={handleYearDropdownLeave}
-                  />
-
-                  {/* Year Dropdown Menu */}
                   {showYearDropdown && (
                     <motion.div
                       ref={yearDropdownRef}
@@ -586,8 +554,6 @@ export default function BudgetsPage() {
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
-                      onMouseEnter={handleYearDropdownEnter}
-                      onMouseLeave={handleYearDropdownLeave}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {yearOptions.map((option, index) => (
@@ -663,7 +629,7 @@ export default function BudgetsPage() {
         {/* Enhanced Budget Form Modal */}
         {showBudgetForm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-sm md:max-w-md px-2 sm:px-4 border border-slate-200/50 dark:border-slate-700/50 animate-scale-in overflow-y-auto max-h-[90vh]">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-full sm:max-w-sm md:max-w-lg px-2 sm:px-4 border border-slate-200/50 dark:border-slate-700/50 animate-scale-in max-h-screen overflow-y-auto h-screen flex flex-col justify-start py-2 sm:py-6">
               <BudgetForm
                 defaultMonth={selectedMonth}
                 defaultYear={selectedYear}

@@ -131,23 +131,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
   return (
     <div
       className={cn("relative", className)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       <div ref={triggerRef} onClick={toggleDropdown} className="cursor-pointer">
         {trigger}
       </div>
-
-      {/* Invisible bridge to prevent hover gap issues */}
-      <div
-        className={cn("absolute w-full", getPlacementClasses(), {
-          block: isOpen,
-          hidden: !isOpen,
-        })}
-        style={{ height: `${offset}px` }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      />
 
       {/* Dropdown Content */}
       <div
@@ -165,8 +152,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
           marginTop: placement.startsWith("bottom") ? `${offset}px` : undefined,
           marginBottom: placement.startsWith("top") ? `${offset}px` : undefined,
         }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         {children}
       </div>
