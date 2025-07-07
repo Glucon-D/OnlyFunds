@@ -287,11 +287,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               disabled={isSubmitting}
               onFocus={() => setFocusedField("type")}
               onBlur={() => setFocusedField(null)}
-              className={`transition-all duration-300 ${
-                focusedField === "type"
-                  ? "ring-2 ring-emerald-500 ring-opacity-50"
-                  : ""
-              }`}
+              className="transition-all duration-300"
             />
           </div>
 
@@ -309,7 +305,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                 className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
                 style={{ color: "var(--foreground-secondary)" }}
               >
-                <span className="text-lg font-medium">$</span>
+                <span className="text-lg font-medium">₹</span>
               </div>
               <Input
                 type="number"

@@ -9,7 +9,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useBudgetStore, useAuthStore } from "@/lib/zustand";
 import { budgetFormSchema } from "@/lib/utils/validation";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/lib/utils/helpers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { motion } from "framer-motion";
 
 interface BudgetFormProps {
   defaultMonth?: number;
@@ -48,6 +48,22 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Dropdown states
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+
+  // Refs and timeout for improved dropdown behavior
+  const categoryDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const monthDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const yearDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const monthDropdownRef = useRef<HTMLDivElement>(null);
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+  const categoryTriggerRef = useRef<HTMLButtonElement>(null);
+  const monthTriggerRef = useRef<HTMLButtonElement>(null);
+  const yearTriggerRef = useRef<HTMLButtonElement>(null);
+
   // Handle ESC key press to close the form
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -56,17 +72,65 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       }
     };
 
-    // Add event listener when component mounts
     document.addEventListener("keydown", handleEscapeKey);
-
-    // Cleanup event listener when component unmounts
     return () => {
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [onCancel]);
 
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        categoryTriggerRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node) &&
+        !categoryTriggerRef.current.contains(event.target as Node)
+      ) {
+        setShowCategoryDropdown(false);
+      }
+      if (
+        monthDropdownRef.current &&
+        monthTriggerRef.current &&
+        !monthDropdownRef.current.contains(event.target as Node) &&
+        !monthTriggerRef.current.contains(event.target as Node)
+      ) {
+        setShowMonthDropdown(false);
+      }
+      if (
+        yearDropdownRef.current &&
+        yearTriggerRef.current &&
+        !yearDropdownRef.current.contains(event.target as Node) &&
+        !yearTriggerRef.current.contains(event.target as Node)
+      ) {
+        setShowYearDropdown(false);
+      }
+    };
+
+    if (showCategoryDropdown || showMonthDropdown || showYearDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showCategoryDropdown, showMonthDropdown, showYearDropdown]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (categoryDropdownTimeoutRef.current) {
+        clearTimeout(categoryDropdownTimeoutRef.current);
+      }
+      if (monthDropdownTimeoutRef.current) {
+        clearTimeout(monthDropdownTimeoutRef.current);
+      }
+      if (yearDropdownTimeoutRef.current) {
+        clearTimeout(yearDropdownTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -142,6 +206,23 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const monthOptions = getMonthOptions();
   const yearOptions = getYearOptions(2020, 2030);
 
+  // Animation variants
+  const dropdownMenuVariants = {
+    hidden: { opacity: 0, y: -10, scale: 0.98 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
+  };
+
+  const dropdownItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i: number) => ({ 
+      opacity: 1, 
+      x: 0, 
+      transition: { delay: 0.05 + i * 0.05, duration: 0.3 } 
+    }),
+    hover: { scale: 1.02 }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto relative">
       {/* Close Button in Top Right Corner */}
@@ -196,7 +277,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       {/* Enhanced Form */}
       <div className="p-6 pt-0">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Category Selection with Enhanced Styling */}
+          {/* Category Selection with Custom Dropdown */}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
               <svg
@@ -214,16 +295,108 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               </svg>
               Category
             </label>
-            <Select
-              name="category"
-              placeholder="Choose a category to budget for"
-              value={formData.category}
-              onChange={handleInputChange}
-              options={categoryOptions}
-              error={errors.category}
-              disabled={isSubmitting}
-              className="transition-all duration-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
+            
+            <div className="relative">
+              <motion.button
+                ref={categoryTriggerRef}
+                type="button"
+                className={`w-full px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-left ${
+                  formData.category 
+                    ? "text-slate-800 dark:text-slate-100" 
+                    : "text-slate-500 dark:text-slate-400"
+                } ${showCategoryDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'} ${errors.category ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                aria-expanded={showCategoryDropdown}
+                aria-haspopup="true"
+                aria-label="Select category"
+                disabled={isSubmitting}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                      />
+                    </svg>
+                    {formData.category || "Choose a category to budget for"}
+                  </div>
+                  <svg
+                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                      showCategoryDropdown ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </motion.button>
+              {showCategoryDropdown && (
+                <motion.div
+                  ref={categoryDropdownRef}
+                  className="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl border z-50 bg-white/90 dark:bg-slate-900/95 border-emerald-200 dark:border-emerald-800 backdrop-blur-xl origin-top"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={dropdownMenuVariants}
+                >
+                  <div className="p-2 max-h-60 overflow-y-auto">
+                    {categoryOptions.map((option, index) => (
+                      <motion.button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, category: option.value }));
+                          setShowCategoryDropdown(false);
+                          if (errors.category) {
+                            setErrors(prev => ({ ...prev, category: "" }));
+                          }
+                        }}
+                        className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
+                          formData.category === option.value
+                            ? "bg-emerald-100 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100"
+                            : ""
+                        }`}
+                        variants={dropdownItemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        custom={index}
+                        tabIndex={showCategoryDropdown ? 0 : -1}
+                      >
+                        <div>
+                          <p className="font-medium text-slate-800 dark:text-slate-100">
+                            {option.label}
+                          </p>
+                          {formData.category === option.value && (
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                              Currently selected
+                            </p>
+                          )}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+            {errors.category && (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.category}</p>
+            )}
           </div>
 
           {/* Amount Input with Enhanced Styling */}
@@ -247,7 +420,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-slate-500 dark:text-slate-400 text-lg font-medium">
-                  $
+                  ₹
                 </span>
               </div>
               <Input
@@ -278,12 +451,12 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                Budget: ${parseFloat(formData.amount || "0").toLocaleString()}
+                Budget: ₹{parseFloat(formData.amount || "0").toLocaleString()}
               </p>
             )}
           </div>
 
-          {/* Period Selection with Enhanced Layout */}
+          {/* Period Selection with Custom Dropdowns */}
           <div className="space-y-4">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
               <svg
@@ -302,33 +475,170 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               Budget Period
             </label>
             <div className="grid grid-cols-2 gap-4">
+              {/* Month Dropdown */}
               <div className="space-y-2">
                 <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   Month
                 </label>
-                <Select
-                  name="month"
-                  value={formData.month}
-                  onChange={handleInputChange}
-                  options={monthOptions}
-                  error={errors.month}
-                  disabled={isSubmitting}
-                  className="transition-all duration-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
+                <div className="relative">
+                  <motion.button
+                    ref={monthTriggerRef}
+                    type="button"
+                    className={`w-full px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-left ${showMonthDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    onClick={() => setShowMonthDropdown(!showMonthDropdown)}
+                    aria-expanded={showMonthDropdown}
+                    aria-haspopup="true"
+                    aria-label="Select month"
+                    disabled={isSubmitting}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{monthOptions.find(opt => opt.value.toString() === formData.month)?.label || "Month"}</span>
+                      <svg
+                        className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                          showMonthDropdown ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </motion.button>
+                  {showMonthDropdown && (
+                    <motion.div
+                      ref={monthDropdownRef}
+                      className="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl border z-50 bg-white/90 dark:bg-slate-900/95 border-emerald-200 dark:border-emerald-800 backdrop-blur-xl origin-top"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={dropdownMenuVariants}
+                    >
+                      <div className="p-2 max-h-60 overflow-y-auto">
+                        {monthOptions.map((option, index) => (
+                          <motion.button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, month: option.value.toString() }));
+                              setShowMonthDropdown(false);
+                            }}
+                            className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
+                              formData.month === option.value.toString()
+                                ? "bg-emerald-100 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100"
+                                : ""
+                            }`}
+                            variants={dropdownItemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            whileHover="hover"
+                            custom={index}
+                            tabIndex={showMonthDropdown ? 0 : -1}
+                          >
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-100">
+                                {option.label}
+                              </p>
+                              {formData.month === option.value.toString() && (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                  Currently selected
+                                </p>
+                              )}
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               </div>
+
+              {/* Year Dropdown */}
               <div className="space-y-2">
                 <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   Year
                 </label>
-                <Select
-                  name="year"
-                  value={formData.year}
-                  onChange={handleInputChange}
-                  options={yearOptions}
-                  error={errors.year}
-                  disabled={isSubmitting}
-                  className="transition-all duration-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
+                <div className="relative">
+                  <motion.button
+                    ref={yearTriggerRef}
+                    type="button"
+                    className={`w-full px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-left ${showYearDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    onClick={() => setShowYearDropdown(!showYearDropdown)}
+                    aria-expanded={showYearDropdown}
+                    aria-haspopup="true"
+                    aria-label="Select year"
+                    disabled={isSubmitting}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{formData.year}</span>
+                      <svg
+                        className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                          showYearDropdown ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </motion.button>
+                  {showYearDropdown && (
+                    <motion.div
+                      ref={yearDropdownRef}
+                      className="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl border z-50 bg-white/90 dark:bg-slate-900/95 border-emerald-200 dark:border-emerald-800 backdrop-blur-xl origin-top"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={dropdownMenuVariants}
+                    >
+                      <div className="p-2 max-h-60 overflow-y-auto">
+                        {yearOptions.map((option, index) => (
+                          <motion.button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, year: option.value.toString() }));
+                              setShowYearDropdown(false);
+                            }}
+                            className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
+                              formData.year === option.value.toString()
+                                ? "bg-emerald-100 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100"
+                                : ""
+                            }`}
+                            variants={dropdownItemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            whileHover="hover"
+                            custom={index}
+                            tabIndex={showYearDropdown ? 0 : -1}
+                          >
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-100">
+                                {option.label}
+                              </p>
+                              {formData.year === option.value.toString() && (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                  Currently selected
+                                </p>
+                              )}
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -443,5 +753,5 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
