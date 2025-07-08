@@ -56,19 +56,31 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Utility to detect touch devices
+  const isTouchDevice = typeof window !== "undefined" && (
+    "ontouchstart" in window ||
+    (window.navigator && window.navigator.maxTouchPoints > 0)
+  );
+
   // Optimized dropdown handlers with timeout
   const handleDropdownEnter = useCallback(() => {
+    if (isTouchDevice) return; // Ignore hover on touch devices
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
     }
     setShowQuickActions(true);
-  }, []);
+  }, [isTouchDevice]);
 
   const handleDropdownLeave = useCallback(() => {
+    if (isTouchDevice) return; // Ignore hover on touch devices
     dropdownTimeoutRef.current = setTimeout(() => {
       setShowQuickActions(false);
     }, 150); // 150ms delay before hiding
+  }, [isTouchDevice]);
+
+  const handleDropdownClick = useCallback(() => {
+    setShowQuickActions((prev) => !prev);
   }, []);
 
   const closeDropdown = useCallback(() => {
@@ -434,7 +446,7 @@ export default function DashboardPage() {
                 variants={quickActionBtnVariants}
                 custom={1}
                 whileHover="hover"
-                onClick={() => setShowQuickActions(!showQuickActions)}
+                onClick={handleDropdownClick}
                 aria-expanded={showQuickActions}
                 aria-haspopup="true"
                 aria-label="More actions menu"
@@ -490,6 +502,9 @@ export default function DashboardPage() {
                   variants={dropdownMenuVariants}
                   onMouseEnter={handleDropdownEnter}
                   onMouseLeave={handleDropdownLeave}
+                  onClick={() => {
+                    if (isTouchDevice) closeDropdown(); // Close on tap for mobile
+                  }}
                 >
                   <div className="p-2">
                     <motion.button
