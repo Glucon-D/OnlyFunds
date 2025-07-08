@@ -9,13 +9,13 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useBudgetStore, useExpenseStore } from "@/lib/zustand";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
 import { BudgetList } from "@/components/budgets/BudgetList";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
+import { motion } from "framer-motion";
 import {
   getCurrentMonth,
   getCurrentYear,
@@ -35,6 +35,18 @@ export default function BudgetsPage() {
   // Selected month/year state
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());
+
+  // Dropdown states for month/year selection
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+
+  // Refs and timeout for improved dropdown behavior
+  const monthDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const yearDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const monthDropdownRef = useRef<HTMLDivElement>(null);
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+  const monthTriggerRef = useRef<HTMLButtonElement>(null);
+  const yearTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -56,23 +68,80 @@ export default function BudgetsPage() {
     }
   }, [selectedMonth, selectedYear, transactions, calculateBudgetProgress]);
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedMonth(parseInt(e.target.value, 10));
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowMonthDropdown(false);
+        setShowYearDropdown(false);
+      }
+    };
+
+    if (showMonthDropdown || showYearDropdown) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [showMonthDropdown, showYearDropdown]);
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        monthDropdownRef.current &&
+        monthTriggerRef.current &&
+        !monthDropdownRef.current.contains(event.target as Node) &&
+        !monthTriggerRef.current.contains(event.target as Node)
+      ) {
+        setShowMonthDropdown(false);
+      }
+      if (
+        yearDropdownRef.current &&
+        yearTriggerRef.current &&
+        !yearDropdownRef.current.contains(event.target as Node) &&
+        !yearTriggerRef.current.contains(event.target as Node)
+      ) {
+        setShowYearDropdown(false);
+      }
+    };
+
+    if (showMonthDropdown || showYearDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMonthDropdown, showYearDropdown]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (monthDropdownTimeoutRef.current) {
+        clearTimeout(monthDropdownTimeoutRef.current);
+      }
+      if (yearDropdownTimeoutRef.current) {
+        clearTimeout(yearDropdownTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const monthOptions = getMonthOptions();
+  const yearOptions = getYearOptions(2020, 2030);
+
+  // Animation variants
+  const dropdownMenuVariants = {
+    hidden: { opacity: 0, y: -10, scale: 0.98 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
   };
 
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedYear(parseInt(e.target.value, 10));
+  const dropdownItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i: number) => ({ 
+      opacity: 1, 
+      x: 0, 
+      transition: { delay: 0.05 + i * 0.05, duration: 0.3 } 
+    }),
+    hover: { scale: 1.02 }
   };
-
-  const monthOptions = getMonthOptions().map((option) => ({
-    value: option.value.toString(),
-    label: option.label,
-  }));
-
-  const yearOptions = getYearOptions(2020, 2030).map((option) => ({
-    value: option.value.toString(),
-    label: option.label,
-  }));
 
   if (isLoading) {
     return (
@@ -134,7 +203,7 @@ export default function BudgetsPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-emerald-800 dark:text-emerald-400 mb-4">
               Budget Management
             </h1>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
@@ -146,7 +215,7 @@ export default function BudgetsPage() {
           {/* Quick Stats Cards */}
           {budgetProgress.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl hover:border-emerald-500 hover:-translate-y-2 hover:bg-gray-100 dark:hover:bg-slate-900 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                     <svg
@@ -167,12 +236,12 @@ export default function BudgetsPage() {
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                   Total Budget
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  ${totalBudget.toLocaleString()}
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  ₹{totalBudget.toLocaleString()}
                 </p>
               </div>
 
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl hover:border-emerald-500 hover:-translate-y-2 hover:bg-gray-100 dark:hover:bg-slate-900 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
                     <svg
@@ -193,12 +262,12 @@ export default function BudgetsPage() {
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                   Total Spent
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  ${totalSpent.toLocaleString()}
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  ₹{totalSpent.toLocaleString()}
                 </p>
               </div>
 
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl hover:border-emerald-500 hover:-translate-y-2 hover:bg-gray-100 dark:hover:bg-slate-900 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center ${
@@ -236,11 +305,11 @@ export default function BudgetsPage() {
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  ${Math.abs(totalRemaining).toLocaleString()}
+                  ₹{Math.abs(totalRemaining).toLocaleString()}
                 </p>
               </div>
 
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl hover:border-emerald-500 hover:-translate-y-2 hover:bg-gray-100 dark:hover:bg-slate-900 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center ${
@@ -271,7 +340,7 @@ export default function BudgetsPage() {
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                   Budgets
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                   {budgetProgress.length}
                   {overBudgetCount > 0 && (
                     <span className="text-sm text-red-500 dark:text-red-400 ml-2">
@@ -283,9 +352,9 @@ export default function BudgetsPage() {
             </div>
           )}
 
-          {/* Action Bar with Month/Year Selection */}
+          {/* Action Bar with Enhanced Month/Year Selection */}
           <div className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8">
-            {/* Period Selection */}
+            {/* Period Selection with Custom Dropdowns */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="text-center sm:text-left">
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
@@ -297,37 +366,184 @@ export default function BudgetsPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-slate-500 dark:text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Month Dropdown */}
+                <div className="relative">
+                  <motion.button
+                    ref={monthTriggerRef}
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[140px] ${showMonthDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    onClick={() => setShowMonthDropdown(!showMonthDropdown)}
+                    aria-expanded={showMonthDropdown}
+                    aria-haspopup="true"
+                    aria-label="Select month"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <Select
-                    name="month"
-                    value={selectedMonth.toString()}
-                    onChange={handleMonthChange}
-                    options={monthOptions}
-                    className="min-w-[120px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                  />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {getMonthName(selectedMonth)}
+                      </div>
+                      <svg
+                        className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                          showMonthDropdown ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </motion.button>
+                  {showMonthDropdown && (
+                    <motion.div
+                      ref={monthDropdownRef}
+                      className="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl border z-50 bg-white/90 dark:bg-slate-900/95 border-emerald-200 dark:border-emerald-800 backdrop-blur-xl origin-top"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={dropdownMenuVariants}
+                    >
+                      <div className="p-2 max-h-60 overflow-y-auto">
+                        {monthOptions.map((option, index) => (
+                          <motion.button
+                            key={option.value}
+                            onClick={() => {
+                              setSelectedMonth(option.value);
+                              setShowMonthDropdown(false);
+                            }}
+                            className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
+                              selectedMonth === option.value
+                                ? "bg-emerald-100 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100"
+                                : ""
+                            }`}
+                            variants={dropdownItemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            whileHover="hover"
+                            custom={index}
+                            tabIndex={showMonthDropdown ? 0 : -1}
+                          >
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-100">
+                                {option.label}
+                              </p>
+                              {selectedMonth === option.value && (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                  Currently selected
+                                </p>
+                              )}
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Select
-                    name="year"
-                    value={selectedYear.toString()}
-                    onChange={handleYearChange}
-                    options={yearOptions}
-                    className="min-w-[100px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                  />
+                {/* Year Dropdown */}
+                <div className="relative">
+                  <motion.button
+                    ref={yearTriggerRef}
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[100px] ${showYearDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    onClick={() => setShowYearDropdown(!showYearDropdown)}
+                    aria-expanded={showYearDropdown}
+                    aria-haspopup="true"
+                    aria-label="Select year"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {selectedYear}
+                      </div>
+                      <svg
+                        className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                          showYearDropdown ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </motion.button>
+                  {showYearDropdown && (
+                    <motion.div
+                      ref={yearDropdownRef}
+                      className="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl border z-50 bg-white/90 dark:bg-slate-900/95 border-emerald-200 dark:border-emerald-800 backdrop-blur-xl origin-top"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={dropdownMenuVariants}
+                    >
+                      <div className="p-2 max-h-60 overflow-y-auto">
+                        {yearOptions.map((option, index) => (
+                          <motion.button
+                            key={option.value}
+                            onClick={() => {
+                              setSelectedYear(option.value);
+                              setShowYearDropdown(false);
+                            }}
+                            className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
+                              selectedYear === option.value
+                                ? "bg-emerald-100 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100"
+                                : ""
+                            }`}
+                            variants={dropdownItemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            whileHover="hover"
+                            custom={index}
+                            tabIndex={showYearDropdown ? 0 : -1}
+                          >
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-100">
+                                {option.label}
+                              </p>
+                              {selectedYear === option.value && (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                  Currently selected
+                                </p>
+                              )}
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>
@@ -335,7 +551,7 @@ export default function BudgetsPage() {
             {/* Create Budget Button */}
             <Button
               onClick={() => setShowBudgetForm(true)}
-              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 px-6 py-3"
+              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-950/30 hover:to-green-600/30 shadow-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1.5 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all duration-500 px-6 py-3"
               size="lg"
             >
               <svg
@@ -366,8 +582,8 @@ export default function BudgetsPage() {
 
         {/* Enhanced Budget Form Modal */}
         {showBudgetForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-md border border-slate-200/50 dark:border-slate-700/50 animate-scale-in">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-full sm:max-w-sm md:max-w-lg px-2 sm:px-4 border border-slate-200/50 dark:border-slate-700/50 animate-scale-in max-h-screen overflow-y-auto h-screen flex flex-col justify-start py-2 sm:py-6">
               <BudgetForm
                 defaultMonth={selectedMonth}
                 defaultYear={selectedYear}

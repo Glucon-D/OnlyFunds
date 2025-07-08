@@ -17,6 +17,7 @@ import { useAuthStore } from "@/lib/zustand";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ChartColumnBig } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
@@ -375,7 +376,7 @@ export const Navbar: React.FC = () => {
                   variants={logoVariants}
                   whileHover="hover"
                 >
-                  <span className="text-white font-bold text-xl">$</span>
+                  <ChartColumnBig className="w-7 h-7 text-white drop-shadow-lg" />
                 </motion.div>
                 <motion.span 
                   className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
