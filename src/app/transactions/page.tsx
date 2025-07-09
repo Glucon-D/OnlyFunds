@@ -9,7 +9,8 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useExpenseStore } from "@/lib/zustand";
 import {
@@ -40,6 +41,7 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
+  IndianRupee,
   Eye,
   Trash2,
   Download,
@@ -57,6 +59,17 @@ import {
   FileText,
   Target,
   Zap,
+  Utensils,
+  Car,
+  Gamepad2,
+  ShoppingBag,
+  Home,
+  Heart,
+  GraduationCap,
+  Briefcase,
+  PiggyBank,
+  Gift,
+  CheckCircle,
 } from "lucide-react";
 
 type SortOption =
@@ -66,6 +79,68 @@ type SortOption =
   | "amount-asc"
   | "description-asc";
 type FilterOption = "all" | "income" | "expense";
+
+// Motion variants for dropdown items
+const dropdownItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
+
+// Category icons mapping
+const getCategoryIcon = (category: string) => {
+  const iconMap: Record<string, React.ComponentType<any>> = {
+    // Expense categories
+    food: Utensils,
+    transportation: Car,
+    entertainment: Gamepad2,
+    shopping: ShoppingBag,
+    utilities: Home,
+    healthcare: Heart,
+    education: GraduationCap,
+    other: Zap,
+    // Income categories
+    salary: Briefcase,
+    freelance: Target,
+    investment: PiggyBank,
+    gift: Gift,
+    bonus: CheckCircle,
+  };
+
+  return iconMap[category.toLowerCase()] || Zap;
+};
+
+// Date range icons mapping
+const getDateRangeIcon = (dateRange: string) => {
+  const iconMap: Record<
+    string,
+    { icon: React.ComponentType<any>; color: string }
+  > = {
+    all: { icon: Calendar, color: "#3b82f6" }, // blue-500
+    today: { icon: Zap, color: "#eab308" }, // yellow-500
+    week: { icon: Calendar, color: "#0ea5e9" }, // sky-500
+    month: { icon: Target, color: "#3b82f6" }, // blue-500
+    "3months": { icon: BarChart3, color: "#10b981" }, // emerald-500
+  };
+
+  return iconMap[dateRange] || { icon: Clock, color: "#3b82f6" };
+};
+
+// Sort option icons mapping
+const getSortIcon = (sortBy: string) => {
+  const iconMap: Record<
+    string,
+    { icon: React.ComponentType<any>; color: string }
+  > = {
+    "date-desc": { icon: SortDesc, color: "#3b82f6" }, // blue-500
+    "date-asc": { icon: SortAsc, color: "#3b82f6" }, // blue-500
+    "amount-desc": { icon: TrendingUp, color: "#10b981" }, // emerald-500
+    "amount-asc": { icon: TrendingDown, color: "#ef4444" }, // red-500
+    "description-asc": { icon: FileText, color: "#0ea5e9" }, // sky-500
+  };
+
+  return iconMap[sortBy] || { icon: Clock, color: "#3b82f6" };
+};
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -86,6 +161,25 @@ export default function TransactionsPage() {
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
+  // Screen size detection
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  // Mobile transaction selection state
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    string | null
+  >(null);
+
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] =
+    useState<Transaction | null>(null);
+
+  // Refs for dropdown triggers
+  const typeDropdownRef = useRef<HTMLButtonElement>(null);
+  const categoryDropdownRef = useRef<HTMLButtonElement>(null);
+  const dateDropdownRef = useRef<HTMLButtonElement>(null);
+  const sortDropdownRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
       router.push("/login");
@@ -98,22 +192,135 @@ export default function TransactionsPage() {
     }
   }, [isLoggedIn, user?.id, fetchTransactions]);
 
-  // Handle ESC key press to close modal
+  // Screen size detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024); // lg breakpoint
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
+
+  // Handle ESC key press to close modals
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && showExpenseForm) {
-        setShowExpenseForm(false);
+      if (event.key === "Escape") {
+        if (showDeleteModal) {
+          cancelDeleteTransaction();
+        } else if (showExpenseForm) {
+          setShowExpenseForm(false);
+        } else if (selectedTransactionId) {
+          setSelectedTransactionId(null);
+        }
       }
     };
 
-    if (showExpenseForm) {
+    if (showExpenseForm || showDeleteModal || selectedTransactionId) {
       document.addEventListener("keydown", handleEscapeKey);
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscapeKey);
     };
-  }, [showExpenseForm]);
+  }, [showExpenseForm, showDeleteModal, selectedTransactionId]);
+
+  // Handle click outside to close dropdowns and clear transaction selection
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      // Check if click is outside any dropdown
+      if (
+        typeDropdownRef.current &&
+        !typeDropdownRef.current.contains(target)
+      ) {
+        setTypeDropdownOpen(false);
+      }
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(target)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+      if (
+        dateDropdownRef.current &&
+        !dateDropdownRef.current.contains(target)
+      ) {
+        setDateDropdownOpen(false);
+      }
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(target)
+      ) {
+        setSortDropdownOpen(false);
+      }
+
+      // Clear transaction selection when clicking outside on non-large screens
+      if (!isLargeScreen && selectedTransactionId) {
+        // Check if the click is outside any transaction element
+        const clickedElement = target as Element;
+        const transactionElement = clickedElement.closest(".transaction-item");
+
+        if (!transactionElement) {
+          setSelectedTransactionId(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isLargeScreen, selectedTransactionId]);
+
+  // Handle mouse enter for large screens only
+  const handleMouseEnter = (
+    setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    dropdownRef: React.RefObject<HTMLButtonElement | null>
+  ) => {
+    if (isLargeScreen && dropdownRef.current) {
+      dropdownRef.current.click();
+    }
+  };
+
+  // Handle mouse leave for large screens only - only close when leaving dropdown content
+  const handleMouseLeaveDropdownContent = () => {
+    if (isLargeScreen) {
+      // Simulate click outside to close dropdown
+      setTimeout(() => {
+        document.dispatchEvent(
+          new MouseEvent("mousedown", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: 0,
+            clientY: 0,
+          })
+        );
+      }, 0);
+    }
+  };
+
+  // Handle dropdown item selection by simulating click outside
+  const handleDropdownItemSelect = () => {
+    // Simulate click outside to close all dropdowns
+    setTimeout(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousedown", {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: 0,
+          clientY: 0,
+        })
+      );
+    }, 0);
+  };
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -266,12 +473,31 @@ export default function TransactionsPage() {
   };
 
   const handleDeleteTransaction = (transaction: Transaction) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${transaction.description}"?`
-      )
-    ) {
-      deleteTransaction(transaction.id);
+    setTransactionToDelete(transaction);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTransaction = () => {
+    if (transactionToDelete) {
+      deleteTransaction(transactionToDelete.id);
+      // Clear selection after deletion
+      setSelectedTransactionId(null);
+      setShowDeleteModal(false);
+      setTransactionToDelete(null);
+    }
+  };
+
+  const cancelDeleteTransaction = () => {
+    setShowDeleteModal(false);
+    setTransactionToDelete(null);
+  };
+
+  // Handle mobile transaction selection
+  const handleMobileTransactionClick = (transactionId: string) => {
+    if (!isLargeScreen) {
+      setSelectedTransactionId((prevId) =>
+        prevId === transactionId ? null : transactionId
+      );
     }
   };
 
@@ -313,8 +539,8 @@ export default function TransactionsPage() {
         {/* Hero Section */}
         <div className="mb-12">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl shadow-xl mb-6">
-              <Receipt className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-18 h-18 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl mb-6">
+              <IndianRupee className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold mb-3 text-emerald-800 dark:text-emerald-400 drop-shadow-lg">
               Transaction History
@@ -406,10 +632,12 @@ export default function TransactionsPage() {
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{
                   backgroundColor:
-                    statistics.netIncome >= 0 ? "var(--success)" : "var(--error)",
+                    statistics.netIncome >= 0
+                      ? "var(--success)"
+                      : "var(--error)",
                 }}
               >
-                <DollarSign className="w-6 h-6 text-white" />
+                <IndianRupee className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
@@ -450,9 +678,50 @@ export default function TransactionsPage() {
             boxShadow: "var(--shadow-lg)",
           }}
         >
-          <div className="flex items-center justify-between gap-3 mb-6">
+          {/* Mobile Layout */}
+          <div className="block md:hidden mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer">
+                <Filter className="w-3 h-3 text-white" />
+              </div>
+              <h3
+                className="text-base font-semibold"
+                style={{ color: "var(--foreground)" }}
+              >
+                Filter & Search Transactions
+              </h3>
+            </div>
+
+            <div className="flex flex-row gap-3 w-full">
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                disabled={isRefreshing}
+                className="flex items-center justify-center gap-2 flex-1 h-10 px-3"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                <span className="text-sm">Refresh</span>
+              </Button>
+              <Button
+                onClick={() => setShowExpenseForm(true)}
+                size="sm"
+                className="flex items-center justify-center gap-2 flex-1 h-10 px-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-500 hover:border-emerald-200 text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Transaction</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Medium and Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5" style={{ color: "var(--primary)" }} />
+              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer">
+                <Filter className="w-4 h-4 text-white" />
+              </div>
               <h3
                 className="text-lg font-semibold"
                 style={{ color: "var(--foreground)" }}
@@ -471,7 +740,9 @@ export default function TransactionsPage() {
                   className="flex items-center justify-center gap-3 sm:gap-2 w-full sm:w-auto h-10 px-3"
                 >
                   <RefreshCw
-                    className={`w-5 h-5 -translate-x-1 sm:translate-x-0 ${isRefreshing ? "animate-spin" : ""}`}
+                    className={`w-5 h-5 -translate-x-1 sm:translate-x-0 ${
+                      isRefreshing ? "animate-spin" : ""
+                    }`}
                   />
                   <span className="inline-block align-middle">Refresh</span>
                 </Button>
@@ -481,7 +752,9 @@ export default function TransactionsPage() {
                   className="flex items-center justify-center gap-2 w-full sm:w-auto h-10 px-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-500 hover:border-emerald-200 text-xs sm:text-sm"
                 >
                   <Plus className="w-5 h-5" />
-                  <span className="inline-block align-middle">Add Transaction</span>
+                  <span className="inline-block align-middle">
+                    Add Transaction
+                  </span>
                 </Button>
               </div>
             </div>
@@ -518,8 +791,14 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${typeDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  ref={typeDropdownRef}
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${
+                    typeDropdownOpen ? "" : "border border-[var(--border)]"
+                  }`}
                   onClick={() => setTypeDropdownOpen((open) => !open)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(setTypeDropdownOpen, typeDropdownRef)
+                  }
                 >
                   <div className="flex items-center gap-2">
                     {typeFilter === "all" && (
@@ -559,79 +838,143 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: "var(--card)",
                 }}
+                onMouseLeave={() => handleMouseLeaveDropdownContent()}
               >
-                <DropdownItem
-                  onClick={() => setTypeFilter("all")}
-                  icon={
-                    <BarChart3
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
-                  }
-                  className={`dropdown-item ${
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setTypeFilter("all");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     typeFilter === "all"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-r-2 border-emerald-500"
+                      : "hover:bg-emerald-100 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
                   }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 0 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>All Types</span>
-                    {typeFilter === "all" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setTypeFilter("income")}
-                  icon={
-                    <TrendingUp
-                      className="w-4 h-4"
-                      style={{ color: "var(--success)" }}
+                  <BarChart3
+                    className={`w-5 h-5 mr-3 ${
+                      typeFilter === "all"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-emerald-500"
+                    }`}
+                  />
+                  <span className="font-medium">All Types</span>
+                  {typeFilter === "all" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setTypeFilter("income");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     typeFilter === "income"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-r-2 border-emerald-500"
+                      : "hover:bg-emerald-100 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 1 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Income Only</span>
-                    {typeFilter === "income" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setTypeFilter("expense")}
-                  icon={
-                    <TrendingDown
-                      className="w-4 h-4"
-                      style={{ color: "var(--error)" }}
+                  <TrendingUp
+                    className={`w-5 h-5 mr-3 ${
+                      typeFilter === "income"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-emerald-500"
+                    }`}
+                  />
+                  <span className="font-medium">Income Only</span>
+                  {typeFilter === "income" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setTypeFilter("expense");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     typeFilter === "expense"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-r-2 border-red-500"
+                      : "hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 2 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Expenses Only</span>
-                    {typeFilter === "expense" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
+                  <TrendingDown
+                    className={`w-5 h-5 mr-3 ${
+                      typeFilter === "expense"
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-red-500"
+                    }`}
+                  />
+                  <span className="font-medium">Expenses Only</span>
+                  {typeFilter === "expense" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-red-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  )}
+                </motion.button>
               </div>
             </Dropdown>
 
@@ -639,14 +982,35 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${categoryDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  ref={categoryDropdownRef}
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${
+                    categoryDropdownOpen ? "" : "border border-[var(--border)]"
+                  }`}
                   onClick={() => setCategoryDropdownOpen((open) => !open)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(
+                      setCategoryDropdownOpen,
+                      categoryDropdownRef
+                    )
+                  }
                 >
                   <div className="flex items-center gap-2">
-                    <Tag
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
+                    {selectedCategory === "all" ? (
+                      <Tag
+                        className="w-4 h-4"
+                        style={{ color: "var(--primary)" }}
+                      />
+                    ) : (
+                      (() => {
+                        const IconComponent = getCategoryIcon(selectedCategory);
+                        return (
+                          <IconComponent
+                            className="w-4 h-4"
+                            style={{ color: "var(--primary)" }}
+                          />
+                        );
+                      })()
+                    )}
                     <span className="truncate">
                       {selectedCategory === "all"
                         ? "All Categories"
@@ -668,59 +1032,107 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: "var(--card)",
                 }}
+                onMouseLeave={() => handleMouseLeaveDropdownContent()}
               >
-                <DropdownItem
-                  onClick={() => setSelectedCategory("all")}
-                  icon={
-                    <Tag
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
-                  }
-                  className={
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     selectedCategory === "all"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-r-2 border-blue-500"
+                      : "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 0 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>All Categories</span>
-                    {selectedCategory === "all" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
+                  <Tag
+                    className={`w-5 h-5 mr-3 ${
+                      selectedCategory === "all"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-blue-500"
+                    }`}
+                  />
+                  <span className="font-medium">All Categories</span>
+                  {selectedCategory === "all" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-blue-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  )}
+                </motion.button>
                 {categories.length > 0 && <DropdownSeparator />}
-                {categories.map((category) => (
-                  <DropdownItem
-                    key={category.value}
-                    onClick={() => setSelectedCategory(category.value)}
-                    icon={
-                      <FileText
-                        className="w-4 h-4"
-                        style={{ color: "var(--foreground-secondary)" }}
+                {categories.map((category, index) => {
+                  const IconComponent = getCategoryIcon(category.value);
+                  return (
+                    <motion.button
+                      key={category.value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(category.value);
+                        handleDropdownItemSelect();
+                      }}
+                      className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
+                        selectedCategory === category.value
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-r-2 border-emerald-500"
+                          : "hover:bg-emerald-100 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
+                      }`}
+                      variants={dropdownItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      transition={{
+                        delay: (index + 1) * 0.05,
+                        duration: 0.3,
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 30,
+                      }}
+                      whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                      whileTap={{
+                        scale: 0.98,
+                        transition: { duration: 0.1 },
+                      }}
+                    >
+                      <IconComponent
+                        className={`w-5 h-5 mr-3 ${
+                          selectedCategory === category.value
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-emerald-500"
+                        }`}
                       />
-                    }
-                    className={
-                      selectedCategory === category.value
-                        ? "bg-emerald-50 dark:bg-emerald-900/20"
-                        : ""
-                    }
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="truncate">{category.label}</span>
+                      <span className="font-medium truncate">
+                        {category.label}
+                      </span>
                       {selectedCategory === category.value && (
-                        <Check
-                          className="w-4 h-4"
-                          style={{ color: "var(--success)" }}
+                        <motion.div
+                          className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
                         />
                       )}
-                    </div>
-                  </DropdownItem>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </div>
             </Dropdown>
 
@@ -728,14 +1140,23 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${dateDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  ref={dateDropdownRef}
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${
+                    dateDropdownOpen ? "" : "border border-[var(--border)]"
+                  }`}
                   onClick={() => setDateDropdownOpen((open) => !open)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(setDateDropdownOpen, dateDropdownRef)
+                  }
                 >
                   <div className="flex items-center gap-2">
-                    <Clock
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
+                    {(() => {
+                      const { icon: IconComponent, color } =
+                        getDateRangeIcon(dateRange);
+                      return (
+                        <IconComponent className="w-4 h-4" style={{ color }} />
+                      );
+                    })()}
                     <span>
                       {dateRange === "all" && "All Time"}
                       {dateRange === "today" && "Today"}
@@ -757,128 +1178,234 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: "var(--card)",
                 }}
+                onMouseLeave={() => handleMouseLeaveDropdownContent()}
               >
-                <DropdownItem
-                  onClick={() => setDateRange("all")}
-                  icon={
-                    <Calendar
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
-                  }
-                  className={
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("all");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     dateRange === "all"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-r-2 border-blue-500"
+                      : "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 0 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>All Time</span>
-                    {dateRange === "all" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
+                  <Calendar
+                    className={`w-5 h-5 mr-3 ${
+                      dateRange === "all"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-blue-500"
+                    }`}
+                  />
+                  <span className="font-medium">All Time</span>
+                  {dateRange === "all" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-blue-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  )}
+                </motion.button>
                 <DropdownSeparator />
-                <DropdownItem
-                  onClick={() => setDateRange("today")}
-                  icon={
-                    <Zap
-                      className="w-4 h-4"
-                      style={{ color: "var(--warning)" }}
-                    />
-                  }
-                  className={
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("today");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     dateRange === "today"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-r-2 border-yellow-500"
+                      : "hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 1 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Today</span>
-                    {dateRange === "today" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setDateRange("week")}
-                  icon={
-                    <Calendar
-                      className="w-4 h-4"
-                      style={{ color: "var(--info)" }}
+                  <Zap
+                    className={`w-5 h-5 mr-3 ${
+                      dateRange === "today"
+                        ? "text-yellow-600 dark:text-yellow-400"
+                        : "text-yellow-500"
+                    }`}
+                  />
+                  <span className="font-medium">Today</span>
+                  {dateRange === "today" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-yellow-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("week");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     dateRange === "week"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-r-2 border-sky-500"
+                      : "hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-600 dark:hover:text-sky-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 2 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>This Week</span>
-                    {dateRange === "week" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setDateRange("month")}
-                  icon={
-                    <Target
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
+                  <Calendar
+                    className={`w-5 h-5 mr-3 ${
+                      dateRange === "week"
+                        ? "text-sky-600 dark:text-sky-400"
+                        : "text-sky-500"
+                    }`}
+                  />
+                  <span className="font-medium">This Week</span>
+                  {dateRange === "week" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-sky-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("month");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     dateRange === "month"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-r-2 border-blue-500"
+                      : "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 3 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>This Month</span>
-                    {dateRange === "month" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setDateRange("3months")}
-                  icon={
-                    <BarChart3
-                      className="w-4 h-4"
-                      style={{ color: "var(--success)" }}
+                  <Target
+                    className={`w-5 h-5 mr-3 ${
+                      dateRange === "month"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-blue-500"
+                    }`}
+                  />
+                  <span className="font-medium">This Month</span>
+                  {dateRange === "month" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-blue-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("3months");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     dateRange === "3months"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-r-2 border-emerald-500"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 4 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Last 3 Months</span>
-                    {dateRange === "3months" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
+                  <BarChart3
+                    className={`w-5 h-5 mr-3 ${
+                      dateRange === "3months"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-emerald-500"
+                    }`}
+                  />
+                  <span className="font-medium">Last 3 Months</span>
+                  {dateRange === "3months" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  )}
+                </motion.button>
               </div>
             </Dropdown>
 
@@ -886,28 +1413,23 @@ export default function TransactionsPage() {
             <Dropdown
               trigger={
                 <button
-                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${sortDropdownOpen ? '' : 'border border-[var(--border)]'}`}
+                  ref={sortDropdownRef}
+                  className={`dropdown-trigger flex items-center justify-between w-full h-10 px-3 py-2 text-sm rounded-lg transition-all duration-300 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${
+                    sortDropdownOpen ? "" : "border border-[var(--border)]"
+                  }`}
                   onClick={() => setSortDropdownOpen((open) => !open)}
+                  onMouseEnter={() =>
+                    handleMouseEnter(setSortDropdownOpen, sortDropdownRef)
+                  }
                 >
                   <div className="flex items-center gap-2">
-                    {(sortBy === "date-desc" || sortBy === "date-asc") && (
-                      <Clock
-                        className="w-4 h-4"
-                        style={{ color: "var(--primary)" }}
-                      />
-                    )}
-                    {(sortBy === "amount-desc" || sortBy === "amount-asc") && (
-                      <DollarSign
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                    {sortBy === "description-asc" && (
-                      <FileText
-                        className="w-4 h-4"
-                        style={{ color: "var(--info)" }}
-                      />
-                    )}
+                    {(() => {
+                      const { icon: IconComponent, color } =
+                        getSortIcon(sortBy);
+                      return (
+                        <IconComponent className="w-4 h-4" style={{ color }} />
+                      );
+                    })()}
                     <span className="truncate">
                       {sortBy === "date-desc" && "Newest First"}
                       {sortBy === "date-asc" && "Oldest First"}
@@ -929,129 +1451,235 @@ export default function TransactionsPage() {
                 style={{
                   backgroundColor: "var(--card)",
                 }}
+                onMouseLeave={() => handleMouseLeaveDropdownContent()}
               >
-                <DropdownItem
-                  onClick={() => setSortBy("date-desc")}
-                  icon={
-                    <SortDesc
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
-                    />
-                  }
-                  className={
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSortBy("date-desc");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     sortBy === "date-desc"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-r-2 border-blue-500"
+                      : "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 0 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Newest First</span>
-                    {sortBy === "date-desc" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setSortBy("date-asc")}
-                  icon={
-                    <SortAsc
-                      className="w-4 h-4"
-                      style={{ color: "var(--primary)" }}
+                  <SortDesc
+                    className={`w-5 h-5 mr-3 ${
+                      sortBy === "date-desc"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-blue-500"
+                    }`}
+                  />
+                  <span className="font-medium">Newest First</span>
+                  {sortBy === "date-desc" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-blue-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSortBy("date-asc");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     sortBy === "date-asc"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-r-2 border-blue-500"
+                      : "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 1 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Oldest First</span>
-                    {sortBy === "date-asc" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownSeparator />
-                <DropdownItem
-                  onClick={() => setSortBy("amount-desc")}
-                  icon={
-                    <TrendingUp
-                      className="w-4 h-4"
-                      style={{ color: "var(--success)" }}
+                  <SortAsc
+                    className={`w-5 h-5 mr-3 ${
+                      sortBy === "date-asc"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-blue-500"
+                    }`}
+                  />
+                  <span className="font-medium">Oldest First</span>
+                  {sortBy === "date-asc" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-blue-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <DropdownSeparator />
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSortBy("amount-desc");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     sortBy === "amount-desc"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-r-2 border-emerald-500"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 2 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Highest Amount</span>
-                    {sortBy === "amount-desc" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => setSortBy("amount-asc")}
-                  icon={
-                    <TrendingDown
-                      className="w-4 h-4"
-                      style={{ color: "var(--error)" }}
+                  <TrendingUp
+                    className={`w-5 h-5 mr-3 ${
+                      sortBy === "amount-desc"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-emerald-500"
+                    }`}
+                  />
+                  <span className="font-medium">Highest Amount</span>
+                  {sortBy === "amount-desc" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSortBy("amount-asc");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     sortBy === "amount-asc"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-r-2 border-red-500"
+                      : "hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 3 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>Lowest Amount</span>
-                    {sortBy === "amount-asc" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
-                <DropdownSeparator />
-                <DropdownItem
-                  onClick={() => setSortBy("description-asc")}
-                  icon={
-                    <FileText
-                      className="w-4 h-4"
-                      style={{ color: "var(--info)" }}
+                  <TrendingDown
+                    className={`w-5 h-5 mr-3 ${
+                      sortBy === "amount-asc"
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-red-500"
+                    }`}
+                  />
+                  <span className="font-medium">Lowest Amount</span>
+                  {sortBy === "amount-asc" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-red-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                  }
-                  className={
+                  )}
+                </motion.button>
+                <DropdownSeparator />
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSortBy("description-asc");
+                    handleDropdownItemSelect();
+                  }}
+                  className={`w-full flex items-center p-3 text-left transition-all duration-200 ${
                     sortBy === "description-asc"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : ""
-                  }
+                      ? "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-r-2 border-sky-500"
+                      : "hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-600 dark:hover:text-sky-400"
+                  }`}
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{
+                    delay: 4 * 0.05,
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30,
+                  }}
+                  whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 },
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>A-Z Description</span>
-                    {sortBy === "description-asc" && (
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: "var(--success)" }}
-                      />
-                    )}
-                  </div>
-                </DropdownItem>
+                  <FileText
+                    className={`w-5 h-5 mr-3 ${
+                      sortBy === "description-asc"
+                        ? "text-sky-600 dark:text-sky-400"
+                        : "text-sky-500"
+                    }`}
+                  />
+                  <span className="font-medium">A-Z Description</span>
+                  {sortBy === "description-asc" && (
+                    <motion.div
+                      className="ml-auto w-2 h-2 bg-sky-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                  )}
+                </motion.button>
               </div>
             </Dropdown>
           </div>
@@ -1094,10 +1722,11 @@ export default function TransactionsPage() {
         </div>
 
         {/* Transactions List */}
-        <div
-          className="rounded-2xl shadow-lg border overflow-hidden hover:shadow-xl hover:border-emerald-500 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-300 bg-white/80 dark:bg-slate-800/80 border-slate-200/50 dark:border-slate-700/50"
-        >
-          <div className="p-6 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="rounded-2xl shadow-lg border overflow-hidden hover:shadow-xl hover:border-emerald-500 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-300 bg-white/80 dark:bg-slate-800/80 border-slate-200/50 dark:border-slate-700/50">
+          <div
+            className="p-6 border-b"
+            style={{ borderColor: "var(--border)" }}
+          >
             <div className="flex items-center justify-between">
               <h3
                 className="text-xl font-semibold"
@@ -1125,7 +1754,7 @@ export default function TransactionsPage() {
                   className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ backgroundColor: "var(--card-hover)" }}
                 >
-                  <Receipt
+                  <IndianRupee
                     className="w-8 h-8"
                     style={{ color: "var(--foreground-secondary)" }}
                   />
@@ -1158,52 +1787,70 @@ export default function TransactionsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredAndSortedTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className={`relative flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-xl border bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow hover:shadow-xl hover:bg-gray-100 dark:hover:bg-slate-900 hover:scale-[1.01] transition-all duration-300 group ${
-                      transaction.type === TransactionType.INCOME
-                        ? "hover:border-emerald-500"
-                        : "hover:border-red-500"
-                    }`}
-                  >
-                    {/* Gradient overlay */}
+                {filteredAndSortedTransactions.map((transaction) => {
+                  const isSelected = selectedTransactionId === transaction.id;
+                  return (
                     <div
-                      className={`absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0 ${
-                        transaction.type === TransactionType.INCOME
-                          ? "bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 from-slate-100 via-slate-200 to-emerald-200"
-                          : "bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-red-950 from-slate-100 via-red-50 to-red-200"
+                      key={transaction.id}
+                      onClick={() =>
+                        handleMobileTransactionClick(transaction.id)
+                      }
+                      className={`transaction-item relative flex flex-col lg:flex-row lg:items-center lg:justify-between py-2 lg:p-4 px-4 rounded-xl border bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow hover:shadow-xl hover:bg-gray-100 dark:hover:bg-slate-900 hover:scale-[1.01] transition-all duration-300 group cursor-pointer lg:cursor-default ${
+                        // Mobile and medium screen focus state
+                        isSelected && !isLargeScreen
+                          ? transaction.type === TransactionType.INCOME
+                            ? "border-emerald-500 shadow-emerald-500/50 shadow-lg ring-2 ring-emerald-500/30"
+                            : "border-red-500 shadow-red-500/50 shadow-lg ring-2 ring-red-500/30"
+                          : "border-slate-200/50 dark:border-slate-700/50"
+                      } ${
+                        // Desktop hover state
+                        isLargeScreen
+                          ? transaction.type === TransactionType.INCOME
+                            ? "hover:border-emerald-500"
+                            : "hover:border-red-500"
+                          : ""
                       }`}
-                    ></div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 relative z-10 w-full">
-                      {/* Transaction Type Icon */}
+                    >
+                      {/* Gradient overlay */}
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto sm:mx-0"
-                        style={{
-                          backgroundColor:
-                            transaction.type === TransactionType.INCOME
-                              ? "var(--success)"
-                              : "var(--error)",
-                        }}
-                      >
-                        {transaction.type === TransactionType.INCOME ? (
-                          <ArrowUp className="w-6 h-6 text-white" />
-                        ) : (
-                          <ArrowDown className="w-6 h-6 text-white" />
-                        )}
-                      </div>
+                        className={`absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0 ${
+                          transaction.type === TransactionType.INCOME
+                            ? "bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 from-slate-100 via-slate-200 to-emerald-200"
+                            : "bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-red-950 from-slate-100 via-red-50 to-red-200"
+                        }`}
+                      ></div>
 
-                      {/* Transaction Details & Amount */}
-                      <div className="flex flex-col w-full">
-                        <div className="flex flex-row items-center justify-between w-full mb-1">
+                      {/* Mobile Layout */}
+                      <div className="block md:hidden relative z-10 w-full">
+                        {/* Transaction Type Icon - Top Right */}
+                        <div className="absolute top-0 right-0">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                            style={{
+                              backgroundColor:
+                                transaction.type === TransactionType.INCOME
+                                  ? "var(--success)"
+                                  : "var(--error)",
+                            }}
+                          >
+                            {transaction.type === TransactionType.INCOME ? (
+                              <ArrowUp className="w-4 h-4 text-white" />
+                            ) : (
+                              <ArrowDown className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Transaction Details */}
+                        <div className="pr-10">
                           <h4
-                            className="font-semibold text-lg truncate"
+                            className="font-semibold text-base mb-1"
                             style={{ color: "var(--foreground)" }}
                           >
                             {transaction.description}
                           </h4>
                           <span
-                            className="text-xl font-bold ml-2"
+                            className="text-lg font-bold block mb-2"
                             style={{
                               color:
                                 transaction.type === TransactionType.INCOME
@@ -1211,44 +1858,251 @@ export default function TransactionsPage() {
                                   : "var(--error)",
                             }}
                           >
-                            {transaction.type === TransactionType.INCOME ? "+" : "-"}
+                            {transaction.type === TransactionType.INCOME
+                              ? "+"
+                              : "-"}
                             {formatCurrency(transaction.amount)}
                           </span>
+                          <div className="flex flex-col gap-1 text-sm">
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Eye className="w-3 h-3" />
+                              {getCategoryDisplayName(transaction.category)}
+                            </span>
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(transaction.date)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-row items-center justify-between text-sm mt-1 sm:justify-start sm:gap-4">
-                          <span
-                            className="flex items-center gap-1"
-                            style={{ color: "var(--foreground-secondary)" }}
-                          >
-                            <Eye className="w-4 h-4" />
-                            {getCategoryDisplayName(transaction.category)}
-                          </span>
-                          <span
-                            className="flex items-center gap-1"
-                            style={{ color: "var(--foreground-secondary)" }}
-                          >
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(transaction.date)}
-                          </span>
+
+                        {/* Action Button */}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTransaction(transaction);
+                          }}
+                          className={`absolute bottom-0 right-0 w-7 h-7 rounded-md bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 transition-opacity duration-300 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer flex items-center justify-center ${
+                            isSelected ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
                         </div>
                       </div>
 
-                      {/* Action Button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteTransaction(transaction)}
-                        className="mt-2 sm:mt-0 sm:ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 self-end"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {/* Medium Screen Layout */}
+                      <div className="hidden md:block lg:hidden relative z-10 w-full">
+                        {/* Transaction Type Icon - Top Right */}
+                        <div className="absolute top-0 right-0">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                            style={{
+                              backgroundColor:
+                                transaction.type === TransactionType.INCOME
+                                  ? "var(--success)"
+                                  : "var(--error)",
+                            }}
+                          >
+                            {transaction.type === TransactionType.INCOME ? (
+                              <ArrowUp className="w-4 h-4 text-white" />
+                            ) : (
+                              <ArrowDown className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Transaction Details */}
+                        <div className="pr-10">
+                          <h4
+                            className="font-semibold text-lg mb-1"
+                            style={{ color: "var(--foreground)" }}
+                          >
+                            {transaction.description}
+                          </h4>
+                          <span
+                            className="text-xl font-bold block mb-2"
+                            style={{
+                              color:
+                                transaction.type === TransactionType.INCOME
+                                  ? "var(--success)"
+                                  : "var(--error)",
+                            }}
+                          >
+                            {transaction.type === TransactionType.INCOME
+                              ? "+"
+                              : "-"}
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                          <div className="flex flex-row items-center gap-4 text-sm">
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Eye className="w-4 h-4" />
+                              {getCategoryDisplayName(transaction.category)}
+                            </span>
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(transaction.date)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTransaction(transaction);
+                          }}
+                          className={`absolute bottom-0 right-0 w-7 h-7 rounded-md bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 transition-opacity duration-300 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer flex items-center justify-center ${
+                            isSelected ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout (Large screens only) */}
+                      <div className="hidden lg:flex flex-col sm:flex-row sm:items-center gap-4 flex-1 relative z-10 w-full">
+                        {/* Transaction Type Icon */}
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto sm:mx-0"
+                          style={{
+                            backgroundColor:
+                              transaction.type === TransactionType.INCOME
+                                ? "var(--success)"
+                                : "var(--error)",
+                          }}
+                        >
+                          {transaction.type === TransactionType.INCOME ? (
+                            <ArrowUp className="w-6 h-6 text-white" />
+                          ) : (
+                            <ArrowDown className="w-6 h-6 text-white" />
+                          )}
+                        </div>
+
+                        {/* Transaction Details & Amount */}
+                        <div className="flex flex-col w-full">
+                          <div className="flex flex-row items-center justify-between w-full mb-1">
+                            <h4
+                              className="font-semibold text-lg truncate"
+                              style={{ color: "var(--foreground)" }}
+                            >
+                              {transaction.description}
+                            </h4>
+                            <span
+                              className="text-xl font-bold ml-2"
+                              style={{
+                                color:
+                                  transaction.type === TransactionType.INCOME
+                                    ? "var(--success)"
+                                    : "var(--error)",
+                              }}
+                            >
+                              {transaction.type === TransactionType.INCOME
+                                ? "+"
+                                : "-"}
+                              {formatCurrency(transaction.amount)}
+                            </span>
+                          </div>
+                          <div className="flex flex-row items-center justify-between text-sm mt-1 sm:justify-start sm:gap-4">
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Eye className="w-4 h-4" />
+                              {getCategoryDisplayName(transaction.category)}
+                            </span>
+                            <span
+                              className="flex items-center gap-1"
+                              style={{ color: "var(--foreground-secondary)" }}
+                            >
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(transaction.date)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteTransaction(transaction)}
+                          className="mt-2 sm:mt-0 sm:ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 self-end"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && transactionToDelete && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                cancelDeleteTransaction();
+              }
+            }}
+          >
+            <div className="relative bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-md border border-slate-200/50 dark:border-slate-700/50 transform transition-all duration-300 scale-100 animate-scale-in">
+              {/* Modal Header */}
+              <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="lg:w-10 lg:h-10 w-8 h-8 bg-red-600 dark:bg-red-500 rounded-lg flex items-center justify-center shadow-lg">
+                    <Trash2 className="lg:w-6 lg:h-6 w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="lg:text-3xl text-2xl font-semibold text-slate-900 dark:text-white">
+                    Delete Transaction
+                  </h3>
+                </div>
+                <p className="text-base text-slate-600 dark:text-slate-300">
+                  Are you sure you want to delete "
+                  {transactionToDelete.description}"? This action cannot be
+                  undone.
+                </p>
+              </div>
+
+              {/* Modal Footer with Action Buttons */}
+              <div className="p-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                {/* Delete Button */}
+                <Button
+                  type="button"
+                  onClick={confirmDeleteTransaction}
+                  className="flex items-center justify-center gap-2 flex-1 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 focus:ring-2 focus:ring-red-500/30"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </Button>
+
+                {/* Cancel Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={cancelDeleteTransaction}
+                  className="flex items-center justify-center gap-2 flex-1 border-2 border-slate-300 dark:border-slate-600 hover:border-[#ef4444] dark:hover:border-[#ef4444] hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-300 focus:ring-2 focus:ring-[#ef4444]/30 focus:border-[#ef4444]"
+                >
+                  <X className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <span>Cancel</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Enhanced Add Transaction Modal */}
         {showExpenseForm && (
@@ -1260,36 +2114,9 @@ export default function TransactionsPage() {
               }
             }}
           >
-            <div className="relative bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200/50 dark:border-slate-700/50 transform transition-all duration-300 scale-100 animate-scale-in overflow-hidden">
-              {/* Enhanced Modal Header */}
-              <div className="relative  px-6 pt-6 border-b border-slate-200 dark:border-slate-700">
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowExpenseForm(false)}
-                  className="absolute top-4 right-4 w-8 h-8 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-md border border-slate-200 dark:border-slate-600 z-10"
-                  aria-label="Close modal"
-                >
-                  <X className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </button>
-
-                {/* Header Content */}
-                <div className="flex items-center space-x-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Plus className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                      Add New Transaction
-                    </h2>
-                    <p className="text-slate-600 dark:text-slate-300">
-                      Record your income or expense transaction
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enhanced Modal Body */}
-              <div className="p-6">
+            <div className="relative bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200/50 dark:border-slate-700/50 transform transition-all duration-300 scale-100 animate-scale-in overflow-hidden max-h-[90vh] lg:max-h-[85vh] xl:max-h-[80vh] 2xl:max-h-[75vh] flex flex-col">
+              {/* Enhanced Modal Body - with scroll if needed */}
+              <div className="p-4 lg:p-5 flex-1 overflow-y-auto">
                 <ExpenseForm
                   onSuccess={() => {
                     setShowExpenseForm(false);
@@ -1301,25 +2128,28 @@ export default function TransactionsPage() {
                 />
               </div>
 
-              {/* Modal Footer with Tips */}
-              <div className="px-6 pb-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center mt-0.5">
-                      <FileText className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              {/* Modal Footer with Tips - reduced padding */}
+              <div className="px-4 lg:px-5 pb-4 lg:pb-5 pt-3 lg:pt-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start space-x-2.5">
+                    <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/40 rounded-md flex items-center justify-center mt-0.5">
+                      <FileText className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
+                      <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">
                         Quick Tips
                       </h4>
-                      <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
+                      <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-0.5">
                         <li>
-                          • Use clear descriptions to track your spending patterns
+                          • Use clear descriptions to track your spending
+                          patterns
                         </li>
                         <li>
                           • Choose the right category for better budget insights
                         </li>
-                        <li>• Double-check the amount and date before saving</li>
+                        <li>
+                          • Double-check the amount and date before saving
+                        </li>
                       </ul>
                     </div>
                   </div>
