@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { BudgetList } from "@/components/budgets/BudgetList";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
 import { motion } from "framer-motion";
+import { IndianRupee } from "lucide-react";
 import {
   getCurrentMonth,
   getCurrentYear,
@@ -40,6 +41,9 @@ export default function BudgetsPage() {
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
 
+  // Screen size detection
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
   // Refs and timeout for improved dropdown behavior
   const monthDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const yearDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,6 +64,20 @@ export default function BudgetsPage() {
       fetchTransactions(user.id); // Needed for budget progress calculation
     }
   }, [isLoggedIn, user?.id, fetchBudgets, fetchTransactions]);
+
+  // Screen size detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024); // lg breakpoint
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
 
   // Recalculate budget progress when month/year changes
   useEffect(() => {
@@ -123,6 +141,50 @@ export default function BudgetsPage() {
     };
   }, []);
 
+  // Handle mouse enter for large screens only
+  const handleMouseEnter = (
+    setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    dropdownRef: React.RefObject<HTMLButtonElement | null>
+  ) => {
+    if (isLargeScreen && dropdownRef.current) {
+      dropdownRef.current.click();
+    }
+  };
+
+  // Handle mouse leave for large screens only - only close when leaving dropdown content
+  const handleMouseLeaveDropdownContent = () => {
+    if (isLargeScreen) {
+      // Simulate click outside to close dropdown
+      setTimeout(() => {
+        document.dispatchEvent(
+          new MouseEvent("mousedown", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: 0,
+            clientY: 0,
+          })
+        );
+      }, 0);
+    }
+  };
+
+  // Handle dropdown item selection by simulating click outside
+  const handleDropdownItemSelect = () => {
+    // Simulate click outside to close all dropdowns
+    setTimeout(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousedown", {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: 0,
+          clientY: 0,
+        })
+      );
+    }, 0);
+  };
+
   const monthOptions = getMonthOptions();
   const yearOptions = getYearOptions(2020, 2030);
 
@@ -130,17 +192,17 @@ export default function BudgetsPage() {
   const dropdownMenuVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.98 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
-    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
+    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } },
   };
 
   const dropdownItemVariants = {
     hidden: { opacity: 0, x: -10 },
-    visible: (i: number) => ({ 
-      opacity: 1, 
-      x: 0, 
-      transition: { delay: 0.05 + i * 0.05, duration: 0.3 } 
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: 0.05 + i * 0.05, duration: 0.3 },
     }),
-    hover: { scale: 1.02 }
+    hover: { scale: 1.02 },
   };
 
   if (isLoading) {
@@ -218,19 +280,7 @@ export default function BudgetsPage() {
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl hover:border-emerald-500 hover:-translate-y-2 hover:bg-gray-100 dark:hover:bg-slate-900 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-blue-600 dark:text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                      />
-                    </svg>
+                    <IndianRupee className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
@@ -370,8 +420,15 @@ export default function BudgetsPage() {
                 <div className="relative">
                   <motion.button
                     ref={monthTriggerRef}
-                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[140px] ${showMonthDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[140px] ${
+                      showMonthDropdown
+                        ? ""
+                        : "border-2 border-emerald-200 dark:border-emerald-800"
+                    }`}
                     onClick={() => setShowMonthDropdown(!showMonthDropdown)}
+                    onMouseEnter={() =>
+                      handleMouseEnter(setShowMonthDropdown, monthTriggerRef)
+                    }
                     aria-expanded={showMonthDropdown}
                     aria-haspopup="true"
                     aria-label="Select month"
@@ -418,6 +475,7 @@ export default function BudgetsPage() {
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
+                      onMouseLeave={() => handleMouseLeaveDropdownContent()}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {monthOptions.map((option, index) => (
@@ -425,7 +483,7 @@ export default function BudgetsPage() {
                             key={option.value}
                             onClick={() => {
                               setSelectedMonth(option.value);
-                              setShowMonthDropdown(false);
+                              handleDropdownItemSelect();
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               selectedMonth === option.value
@@ -460,8 +518,15 @@ export default function BudgetsPage() {
                 <div className="relative">
                   <motion.button
                     ref={yearTriggerRef}
-                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[100px] ${showYearDropdown ? '' : 'border-2 border-emerald-200 dark:border-emerald-800'}`}
+                    className={`group px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 bg-white/80 dark:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 min-w-[100px] ${
+                      showYearDropdown
+                        ? ""
+                        : "border-2 border-emerald-200 dark:border-emerald-800"
+                    }`}
                     onClick={() => setShowYearDropdown(!showYearDropdown)}
+                    onMouseEnter={() =>
+                      handleMouseEnter(setShowYearDropdown, yearTriggerRef)
+                    }
                     aria-expanded={showYearDropdown}
                     aria-haspopup="true"
                     aria-label="Select year"
@@ -508,6 +573,7 @@ export default function BudgetsPage() {
                       animate="visible"
                       exit="exit"
                       variants={dropdownMenuVariants}
+                      onMouseLeave={() => handleMouseLeaveDropdownContent()}
                     >
                       <div className="p-2 max-h-60 overflow-y-auto">
                         {yearOptions.map((option, index) => (
@@ -515,7 +581,7 @@ export default function BudgetsPage() {
                             key={option.value}
                             onClick={() => {
                               setSelectedYear(option.value);
-                              setShowYearDropdown(false);
+                              handleDropdownItemSelect();
                             }}
                             className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-800 dark:hover:text-emerald-100 ${
                               selectedYear === option.value
@@ -582,8 +648,14 @@ export default function BudgetsPage() {
 
         {/* Enhanced Budget Form Modal */}
         {showBudgetForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-full sm:max-w-sm md:max-w-lg px-2 sm:px-4 border border-slate-200/50 dark:border-slate-700/50 animate-scale-in max-h-screen overflow-y-auto h-screen flex flex-col justify-start py-2 sm:py-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 lg:p-6 z-50 animate-fade-in">
+            <div
+              className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md lg:max-w-lg border border-slate-200/50 dark:border-slate-700/50 animate-scale-in max-h-[90vh] sm:max-h-[85vh] lg:max-h-[80vh] overflow-y-auto p-4 sm:p-5 lg:p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/60 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-slate-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600/60 dark:[&::-webkit-scrollbar-thumb:hover]:bg-slate-500/80 [&::-webkit-scrollbar-corner]:bg-transparent"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(148, 163, 184, 0.6) transparent",
+              }}
+            >
               <BudgetForm
                 defaultMonth={selectedMonth}
                 defaultYear={selectedYear}

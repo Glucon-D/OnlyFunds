@@ -28,6 +28,7 @@ import {
 } from "@/lib/utils/helpers";
 import { Dialog } from "@/components/ui/Dialog";
 import toast from "react-hot-toast";
+import { IndianRupee } from "lucide-react";
 
 // Optimized function to calculate budget progress
 const calculateBudgetProgressOptimized = (
@@ -92,7 +93,12 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
   selectedMonth,
   selectedYear,
 }) => {
-  const { budgets, fetchBudgets, isLoading: budgetsLoading, deleteBudget } = useBudgetStore();
+  const {
+    budgets,
+    fetchBudgets,
+    isLoading: budgetsLoading,
+    deleteBudget,
+  } = useBudgetStore();
   const {
     transactions,
     fetchTransactions,
@@ -348,37 +354,70 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
   return (
     <>
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.open} onOpenChange={cancelDelete}>
-        <div className="p-6 w-80 max-w-full flex flex-col items-center">
-          <div className="mb-4">
-            <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-bold mb-2 text-slate-900 dark:text-white text-center">Delete Budget?</h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-6 text-center">
-            Are you sure you want to delete the budget for <span className="font-semibold text-red-600">{confirmDialog.category && getCategoryDisplayName(confirmDialog.category)}</span>? This action cannot be undone.
-          </p>
-          <div className="flex gap-3 w-full">
-            <button
-              className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
-              onClick={cancelDelete}
-              disabled={isDeleting}
-              type="button"
-            >
-              Cancel
-            </button>
-            <button
-              className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all disabled:opacity-60"
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              type="button"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
-          </div>
+      <div
+        style={{
+          position: "relative",
+        }}
+      >
+        <style>{`
+          .budget-delete-dialog button[aria-label="Close"] {
+            display: none !important;
+          }
+          .budget-delete-dialog .absolute.top-2.right-2 {
+            display: none !important;
+          }
+        `}</style>
+        <div className="budget-delete-dialog">
+          <Dialog open={confirmDialog.open} onOpenChange={cancelDelete}>
+            <div className="p-6 w-80 max-w-full flex flex-col items-center">
+              <div className="mb-4">
+                <svg
+                  className="w-12 h-12 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold mb-2 text-slate-900 dark:text-white text-center">
+                Delete Budget?
+              </h2>
+              <p className="text-slate-600 dark:text-slate-300 mb-6 text-center">
+                Are you sure you want to delete the budget for{" "}
+                <span className="font-semibold text-red-600">
+                  {confirmDialog.category &&
+                    getCategoryDisplayName(confirmDialog.category)}
+                </span>
+                ? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                  onClick={cancelDelete}
+                  disabled={isDeleting}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all disabled:opacity-60"
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  type="button"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </Dialog>
         </div>
-      </Dialog>
+      </div>
       {/* Budget List UI */}
       <div className="space-y-6">
         {budgetProgress.map((progress, index) => (
@@ -411,7 +450,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
                               : "bg-gradient-to-br from-emerald-100 to-green-200 dark:from-emerald-900/40 dark:to-green-800/40"
                           }`}
                         >
-                          <svg
+                          <IndianRupee
                             className={`w-7 h-7 ${
                               progress.isOverBudget
                                 ? "text-red-600 dark:text-red-400"
@@ -419,17 +458,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
                                 ? "text-yellow-600 dark:text-yellow-400"
                                 : "text-emerald-600 dark:text-emerald-400"
                             }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                            />
-                          </svg>
+                          />
                         </div>
                         {/* Status indicator dot */}
                         <div
@@ -510,19 +539,7 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
                     <div className="text-center p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/80 dark:from-indigo-950/80 dark:to-indigo-900/80 rounded-xl border border-blue-200 dark:border-indigo-900 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-xl hover:from-blue-50/40 hover:to-blue-100/40 hover:dark:from-indigo-950/30 hover:dark:to-indigo-800/30 hover:backdrop-blur-sm hover:scale-[1.03] transition-all duration-500">
                       <div className="flex items-center justify-center mb-2">
                         <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                          <svg
-                            className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                            />
-                          </svg>
+                          <IndianRupee className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                       </div>
                       <p className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wide font-semibold mb-1">
@@ -709,9 +726,12 @@ const BudgetListComponent: React.FC<BudgetListProps> = ({
                             Budget Exceeded
                           </h4>
                           <p className="text-sm text-red-700 dark:text-red-300">
-                            You&apos;ve exceeded your budget for this category by{" "}
+                            You&apos;ve exceeded your budget for this category
+                            by{" "}
                             <span className="font-semibold">
-                              {formatCurrency(Math.abs(progress.remainingAmount))}
+                              {formatCurrency(
+                                Math.abs(progress.remainingAmount)
+                              )}
                             </span>
                             . Consider reviewing your spending or adjusting your
                             budget.

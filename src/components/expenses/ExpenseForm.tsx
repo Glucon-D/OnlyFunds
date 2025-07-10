@@ -17,6 +17,7 @@ import {
   getExpenseCategories,
   getIncomeCategories,
   formatDateInput,
+  getCategoryDisplayName,
 } from "@/lib/utils/helpers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -45,10 +46,12 @@ import {
   ChevronDown as ChevronDownIcon,
   X,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ExpenseFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  asModal?: boolean; // New prop to control modal rendering
 }
 
 // Animation variants
@@ -110,6 +113,7 @@ const getCategoryIcon = (category: string) => {
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   onSuccess,
   onCancel,
+  asModal = false,
 }) => {
   const { addTransaction } = useExpenseStore();
   const { user } = useAuthStore();
@@ -119,12 +123,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     amount: "",
     description: "",
     category: "",
+    customCategory: "",
     date: formatDateInput(new Date()),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   // Dropdown states
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
@@ -184,6 +188,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       amount: "",
       description: "",
       category: "",
+      customCategory: "",
       date: formatDateInput(new Date()),
     });
     setErrors({});
@@ -227,36 +232,49 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       try {
         const validatedData = transactionFormSchema.parse(formData);
 
+        // Use custom category if "other" is selected and custom category is provided
+        const finalCategory =
+          validatedData.category === "other" && validatedData.customCategory
+            ? validatedData.customCategory
+            : validatedData.category;
+
         addTransaction(
           {
             type: validatedData.type,
             amount: validatedData.amount,
             description: validatedData.description,
-            category: validatedData.category as
-              | ExpenseCategory
-              | IncomeCategory,
+            category: finalCategory as ExpenseCategory | IncomeCategory,
             date: validatedData.date,
           },
           user?.id
         );
 
-        // Show success animation
-        setShowSuccessAnimation(true);
+        // Show success toast notification
+        const transactionTypeLabel =
+          formData.type === TransactionType.INCOME ? "Income" : "Expense";
+        const categoryDisplayName =
+          finalCategory === formData.category
+            ? getCategoryDisplayName(
+                formData.category as ExpenseCategory | IncomeCategory
+              )
+            : formData.customCategory;
+        toast.success(
+          `${transactionTypeLabel} transaction for ${categoryDisplayName} added successfully!`
+        );
 
-        // Reset form after brief delay
-        setTimeout(() => {
-          setFormData({
-            type: "",
-            amount: "",
-            description: "",
-            category: "",
-            date: formatDateInput(new Date()),
-          });
-          setShowSuccessAnimation(false);
-          onSuccess?.();
-        }, 1200);
+        // Reset form and close modal
+        setFormData({
+          type: "",
+          amount: "",
+          description: "",
+          category: "",
+          customCategory: "",
+          date: formatDateInput(new Date()),
+        });
+        onSuccess?.();
       } catch (error) {
         console.error("Error adding transaction:", error);
+        toast.error("Failed to add transaction. Please try again.");
       } finally {
         setIsSubmitting(false);
       }
@@ -366,10 +384,18 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   };
 
   const handleCategorySelect = (category: string) => {
-    setFormData((prev) => ({ ...prev, category }));
+    setFormData((prev) => ({
+      ...prev,
+      category,
+      // Clear custom category when switching away from "other"
+      customCategory: category === "other" ? prev.customCategory : "",
+    }));
     setCategoryDropdownOpen(false);
     if (errors.category) {
       setErrors((prev) => ({ ...prev, category: "" }));
+    }
+    if (errors.customCategory) {
+      setErrors((prev) => ({ ...prev, customCategory: "" }));
     }
   };
 
@@ -405,34 +431,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     },
   ];
 
-  if (showSuccessAnimation) {
-    return (
-      <motion.div
-        className="w-full max-w-md mx-auto"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="rounded-2xl p-8 text-center shadow-xl border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-          <motion.div
-            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-500"
-            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 0.6, repeat: 1 }}
-          >
-            <CheckCircle className="w-10 h-10 text-white" />
-          </motion.div>
-          <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-white">
-            Transaction Added!
-          </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Your transaction has been successfully recorded.
-          </p>
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
+  // Render the form content
+  const formContent = (
     <motion.div
       className="w-full max-w-md mx-auto"
       variants={formVariants}
@@ -464,7 +464,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           >
             <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
           </motion.div>
-          <h2 className="text-base lg:text-lg xl:text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
             Add New Transaction
           </h2>
         </div>
@@ -927,6 +927,44 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             </motion.div>
           )}
 
+          {/* Custom Category Input - Show when "Other" is selected */}
+          {formData.category === "other" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative"
+            >
+              <label className="block text-sm lg:text-base font-medium mb-1.5 lg:mb-2 text-slate-700 dark:text-slate-200">
+                <FileText className="w-4 lg:w-5 h-4 lg:h-5 inline mr-2 text-emerald-500" />
+                Custom Category
+              </label>
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileFocus={{ scale: 1.01 }}
+              >
+                <Input
+                  type="text"
+                  name="customCategory"
+                  value={formData.customCategory}
+                  onChange={handleInputChange}
+                  placeholder="Enter custom category name"
+                  error={errors.customCategory}
+                  disabled={isSubmitting}
+                  onFocus={() => setFocusedField("customCategory")}
+                  onBlur={() => setFocusedField(null)}
+                  className="transition-all duration-300 hover:border-emerald-500"
+                />
+              </motion.div>
+              {errors.customCategory && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.customCategory}
+                </p>
+              )}
+            </motion.div>
+          )}
+
           {/* Date Input */}
           <div className="relative">
             <label className="block text-sm lg:text-base font-medium mb-1.5 lg:mb-2 text-slate-700 dark:text-slate-200">
@@ -978,7 +1016,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               >
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                   isLoading={isSubmitting}
                   disabled={isSubmitting}
                 >
@@ -1037,6 +1075,54 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           </div>
         </form>
       </motion.div>
+
+      {/* Quick Tips Section - Outside the form container */}
+      <div className="mt-3 sm:mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start space-x-2.5">
+          <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/40 rounded-md flex items-center justify-center mt-0.5">
+            <FileText className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">
+              Quick Tips
+            </h4>
+            <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-0.5">
+              <li>• Add clear descriptions for better tracking</li>
+              <li>• Choose proper categories for insights</li>
+              <li>• Record transactions promptly for accuracy</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
+
+  // Return the form with or without modal wrapper
+  if (asModal) {
+    return (
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onCancel?.();
+          }
+        }}
+      >
+        <div className="relative bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200/50 dark:border-slate-700/50 transform transition-all duration-300 scale-100 animate-scale-in overflow-hidden max-h-[90vh] lg:max-h-[85vh] xl:max-h-[80vh] 2xl:max-h-[75vh] flex flex-col">
+          {/* Enhanced Modal Body - with scroll if needed */}
+          <div
+            className="p-4 lg:p-5 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300/60 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-slate-400/70 [&::-webkit-scrollbar-corner]:bg-transparent dark:[&::-webkit-scrollbar-thumb]:bg-slate-600/60 dark:[&::-webkit-scrollbar-thumb:hover]:bg-slate-500/70"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(148, 163, 184, 0.6) transparent",
+            }}
+          >
+            {formContent}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return formContent;
 };

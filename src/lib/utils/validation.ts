@@ -93,25 +93,34 @@ export const transactionFormSchema = z.object({
     .max(200, 'Description must be less than 200 characters'),
   category: z.string()
     .min(1, 'Category is required'),
+  customCategory: z.string().optional(),
   date: z.string()
     .min(1, 'Date is required')
     .transform((val) => new Date(val))
 }).refine((data) => {
   // Validate category based on transaction type
   if (data.type === TransactionType.EXPENSE) {
+    // Allow custom category when "other" is selected
+    if (data.category === ExpenseCategory.OTHER) {
+      return data.customCategory && data.customCategory.trim().length > 0;
+    }
     return Object.values(ExpenseCategory).includes(data.category as ExpenseCategory);
   } else {
+    // Allow custom category when "other" is selected
+    if (data.category === IncomeCategory.OTHER) {
+      return data.customCategory && data.customCategory.trim().length > 0;
+    }
     return Object.values(IncomeCategory).includes(data.category as IncomeCategory);
   }
 }, {
-  message: 'Invalid category for the selected transaction type',
-  path: ['category']
+  message: 'Please specify a custom category when "Other" is selected, or choose a valid category',
+  path: ['customCategory']
 });
 
 export const budgetFormSchema = z.object({
   category: z.string()
-    .min(1, 'Category is required')
-    .transform((val) => val as ExpenseCategory),
+    .min(1, 'Category is required'),
+  customCategory: z.string().optional(),
   amount: z.string()
     .min(1, 'Amount is required')
     .transform((val) => {
@@ -125,6 +134,15 @@ export const budgetFormSchema = z.object({
   year: z.string()
     .min(1, 'Year is required')
     .transform((val) => parseInt(val, 10))
+}).refine((data) => {
+  // Allow custom category when "other" is selected
+  if (data.category === ExpenseCategory.OTHER) {
+    return data.customCategory && data.customCategory.trim().length > 0;
+  }
+  return Object.values(ExpenseCategory).includes(data.category as ExpenseCategory);
+}, {
+  message: 'Please specify a custom category when "Other" is selected, or choose a valid category',
+  path: ['customCategory']
 });
 
 // Type exports for form data

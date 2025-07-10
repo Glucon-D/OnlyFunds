@@ -6,7 +6,11 @@ interface DialogProps {
   children: React.ReactNode;
 }
 
-export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
+export const Dialog: React.FC<DialogProps> = ({
+  open,
+  onOpenChange,
+  children,
+}) => {
   React.useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -27,7 +31,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
     >
       <div
         className="bg-white dark:bg-gray-900 rounded-lg shadow-lg relative"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
         <button

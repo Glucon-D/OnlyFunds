@@ -745,34 +745,16 @@ export default function DashboardPage() {
 
         {/* Enhanced Add Transaction Form Modal */}
         {showExpenseForm && (
-          <div
-            className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowExpenseForm(false);
+          <ExpenseForm
+            asModal={true}
+            onSuccess={() => {
+              setShowExpenseForm(false);
+              if (user?.id) {
+                fetchTransactions(user.id); // Refresh data
               }
             }}
-          >
-            <div
-              className="rounded-2xl p-6 w-full max-w-md shadow-2xl border transform transition-all duration-300 scale-100 animate-in slide-in-from-bottom-4"
-              style={{
-                backgroundColor: "var(--card)",
-                borderColor: "var(--border)",
-                boxShadow: "var(--shadow-lg)",
-              }}
-            >
-              <ExpenseForm
-                onSuccess={() => {
-                  setShowExpenseForm(false);
-                  if (user?.id) {
-                    fetchTransactions(user.id); // Refresh data
-                  }
-                }}
-                onCancel={() => setShowExpenseForm(false)}
-              />
-            </div>
-          </div>
+            onCancel={() => setShowExpenseForm(false)}
+          />
         )}
 
         {/* Enhanced Financial Tips */}

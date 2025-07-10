@@ -1,30 +1,38 @@
 /**
  * Transaction List Component
- * 
  * A component that displays a list of all user transactions with filtering and sorting options.
  * Includes filters for transaction type (income/expense) and sorting by date or amount.
  * Features responsive design, empty states, and transaction deletion functionality.
  * Integrates with the expense store for data management.
  */
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useExpenseStore, useAuthStore } from '@/lib/zustand';
-import { TransactionType, Transaction } from '@/lib/types';
-import { formatCurrency, formatDate, getCategoryDisplayName, sortByDate, sortByAmount } from '@/lib/utils/helpers';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import React, { useState, useEffect } from "react";
+import { useExpenseStore, useAuthStore } from "@/lib/zustand";
+import { TransactionType, Transaction } from "@/lib/types";
+import {
+  formatCurrency,
+  formatDate,
+  getCategoryDisplayName,
+  sortByDate,
+  sortByAmount,
+} from "@/lib/utils/helpers";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
-type SortOption = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
+type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 
 export const TransactionList: React.FC = () => {
-  const { transactions, fetchTransactions, deleteTransaction } = useExpenseStore();
+  const { transactions, fetchTransactions, deleteTransaction } =
+    useExpenseStore();
   const { user } = useAuthStore();
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('date-desc');
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    Transaction[]
+  >([]);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("date-desc");
 
   useEffect(() => {
     if (user?.id) {
@@ -36,22 +44,22 @@ export const TransactionList: React.FC = () => {
     let filtered = [...transactions];
 
     // Apply type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(t => t.type === typeFilter);
+    if (typeFilter !== "all") {
+      filtered = filtered.filter((t) => t.type === typeFilter);
     }
 
     // Apply sorting
     switch (sortBy) {
-      case 'date-desc':
+      case "date-desc":
         filtered = sortByDate(filtered, false);
         break;
-      case 'date-asc':
+      case "date-asc":
         filtered = sortByDate(filtered, true);
         break;
-      case 'amount-desc':
+      case "amount-desc":
         filtered = sortByAmount(filtered, false);
         break;
-      case 'amount-asc':
+      case "amount-asc":
         filtered = sortByAmount(filtered, true);
         break;
     }
@@ -60,29 +68,29 @@ export const TransactionList: React.FC = () => {
   }, [transactions, typeFilter, sortBy]);
 
   const handleDeleteTransaction = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    if (window.confirm("Are you sure you want to delete this transaction?")) {
       deleteTransaction(id);
     }
   };
 
   const typeFilterOptions = [
-    { value: 'all', label: 'All Transactions' },
-    { value: TransactionType.INCOME, label: 'Income' },
-    { value: TransactionType.EXPENSE, label: 'Expense' }
+    { value: "all", label: "All Transactions" },
+    { value: TransactionType.INCOME, label: "Income" },
+    { value: TransactionType.EXPENSE, label: "Expense" },
   ];
 
   const sortOptions = [
-    { value: 'date-desc', label: 'Date (Newest First)' },
-    { value: 'date-asc', label: 'Date (Oldest First)' },
-    { value: 'amount-desc', label: 'Amount (Highest First)' },
-    { value: 'amount-asc', label: 'Amount (Lowest First)' }
+    { value: "date-desc", label: "Date (Newest First)" },
+    { value: "date-asc", label: "Date (Oldest First)" },
+    { value: "amount-desc", label: "Amount (Highest First)" },
+    { value: "amount-asc", label: "Amount (Lowest First)" },
   ];
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Transaction History</CardTitle>
-        
+
         {/* Filters and sorting */}
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
           <Select
@@ -92,7 +100,7 @@ export const TransactionList: React.FC = () => {
             placeholder="Filter by type"
             className="flex-1"
           />
-          
+
           <Select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -102,15 +110,19 @@ export const TransactionList: React.FC = () => {
           />
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 mb-2">
-              {transactions.length === 0 ? 'No transactions yet' : 'No transactions match your filters'}
+              {transactions.length === 0
+                ? "No transactions yet"
+                : "No transactions match your filters"}
             </div>
             <div className="text-sm text-gray-400 dark:text-gray-500">
-              {transactions.length === 0 ? 'Add your first transaction to get started' : 'Try adjusting your filters'}
+              {transactions.length === 0
+                ? "Add your first transaction to get started"
+                : "Try adjusting your filters"}
             </div>
           </div>
         ) : (
@@ -128,15 +140,15 @@ export const TransactionList: React.FC = () => {
                     <span
                       className={`font-semibold ${
                         transaction.type === TransactionType.INCOME
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      {transaction.type === TransactionType.INCOME ? '+' : '-'}
+                      {transaction.type === TransactionType.INCOME ? "+" : "-"}
                       {formatCurrency(transaction.amount)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center space-x-4">
                       <span className="capitalize">
@@ -146,7 +158,7 @@ export const TransactionList: React.FC = () => {
                         {formatDate(transaction.date)}
                       </span>
                     </div>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
