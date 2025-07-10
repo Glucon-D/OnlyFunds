@@ -781,8 +781,8 @@ export default function TransactionsPage() {
           </div>
 
           <div className="space-y-4">
-            {/* Enhanced Search - Full Width */}
-            <div className="relative w-full">
+            {/* Search Bar - Responsive Layout */}
+            <div className="relative w-full lg:hidden">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 z-10"
                 style={{ color: "var(--foreground-secondary)" }}
@@ -807,8 +807,33 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            {/* Filter Dropdowns - 2x2 Grid on Mobile, Responsive on Larger Screens */}
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+            {/* Filter Dropdowns - Include Search in Grid on Large Screens */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+              {/* Enhanced Search - First Column on Large Screens Only */}
+              <div className="relative hidden lg:block">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 z-10"
+                  style={{ color: "var(--foreground-secondary)" }}
+                />
+                <Input
+                  type="text"
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-10 h-10 transition-all duration-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  >
+                    <X
+                      className="w-3 h-3"
+                      style={{ color: "var(--foreground-secondary)" }}
+                    />
+                  </button>
+                )}
+              </div>
               {/* Enhanced Type Filter Dropdown */}
               <Dropdown
                 trigger={
