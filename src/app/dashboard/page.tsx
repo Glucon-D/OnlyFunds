@@ -32,7 +32,7 @@ const MOTIVATIONAL_TIPS = [
   "It's not your salary that makes you rich, it's your spending habits. — Charles A. Jaffe",
   "The best time to plant a tree was 20 years ago. The second best time is now. — Chinese Proverb",
   "Wealth consists not in having great possessions, but in having few wants. — Epictetus",
-  "Financial freedom is available to those who learn about it and work for it. — Robert Kiyosaki"
+  "Financial freedom is available to those who learn about it and work for it. — Robert Kiyosaki",
 ];
 
 export default function DashboardPage() {
@@ -57,10 +57,10 @@ export default function DashboardPage() {
   }, []);
 
   // Utility to detect touch devices
-  const isTouchDevice = typeof window !== "undefined" && (
-    "ontouchstart" in window ||
-    (window.navigator && window.navigator.maxTouchPoints > 0)
-  );
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    ("ontouchstart" in window ||
+      (window.navigator && window.navigator.maxTouchPoints > 0));
 
   // Optimized dropdown handlers with timeout
   const handleDropdownEnter = useCallback(() => {
@@ -190,42 +190,55 @@ export default function DashboardPage() {
   const cardVariants = {
     hidden: { opacity: 0, y: 40 },
     visible: { opacity: 1, y: 0 },
-    hover: { scale: 1.04 }
+    hover: { scale: 1.04 },
   };
   const iconVariants = {
     initial: { scale: 0.9, rotate: -8, opacity: 0 },
     animate: { scale: 1, rotate: 0, opacity: 1 },
-    hover: { scale: 1.15, rotate: 6 }
+    hover: { scale: 1.15, rotate: 6 },
   };
 
   const quickActionsHeaderVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
   const quickActionBtnVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: 0.1 + i * 0.1, duration: 0.5 } }),
-    hover: { scale: 1.05, boxShadow: "0 4px 16px 0 rgba(16,185,129,0.10)" }
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: 0.1 + i * 0.1, duration: 0.5 },
+    }),
+    hover: { scale: 1.05, boxShadow: "0 4px 16px 0 rgba(16,185,129,0.10)" },
   };
   const dropdownMenuVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.98 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } },
-    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
+    exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } },
   };
   const dropdownItemVariants = {
     hidden: { opacity: 0, x: -10 },
-    visible: (i: number) => ({ opacity: 1, x: 0, transition: { delay: 0.1 + i * 0.08, duration: 0.3 } }),
-    hover: { scale: 1.03 }
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: 0.1 + i * 0.08, duration: 0.3 },
+    }),
+    hover: { scale: 1.03 },
   };
 
   const tipsSectionVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
   };
   const tipsIconVariants = {
     hidden: { scale: 0.8, rotate: -10, opacity: 0 },
-    visible: { scale: 1, rotate: 0, opacity: 1, transition: { duration: 0.5, delay: 0.2 } },
-    hover: { scale: 1.1, rotate: 8 }
+    visible: {
+      scale: 1,
+      rotate: 0,
+      opacity: 1,
+      transition: { duration: 0.5, delay: 0.2 },
+    },
+    hover: { scale: 1.1, rotate: 8 },
   };
 
   return (
@@ -261,7 +274,12 @@ export default function DashboardPage() {
             className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-emerald-400 via-green-400 to-emerald-600 animate-gradient rounded-3xl shadow-2xl mb-7 border-4 border-white dark:border-slate-900"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 180 }}
+            transition={{
+              duration: 0.6,
+              delay: 0.2,
+              type: "spring",
+              stiffness: 180,
+            }}
           >
             <ChartColumnBig className="w-10 h-10 text-white drop-shadow-lg" />
           </motion.div>
@@ -300,12 +318,17 @@ export default function DashboardPage() {
           >
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
-              style={{ background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)" }}
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+              }}
             />
             <div className="relative">
               <motion.div
                 className="w-14 h-14 rounded-xl flex items-center justify-center mr-4 shadow-lg mb-4"
-                style={{ background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)" }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                }}
                 variants={iconVariants}
                 initial="initial"
                 animate="animate"
@@ -314,11 +337,25 @@ export default function DashboardPage() {
               >
                 <IndianRupee className="w-7 h-7 text-white" strokeWidth={2.2} />
               </motion.div>
-              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">Monthly Income</span>
-              <p className="text-3xl font-bold mb-2 text-emerald-600 dark:text-emerald-400 mt-2">{formatCurrency(monthlyIncome)}</p>
+              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                Monthly Income
+              </span>
+              <p className="text-3xl font-bold mb-2 text-emerald-600 dark:text-emerald-400 mt-2">
+                {formatCurrency(monthlyIncome)}
+              </p>
               <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
                 </svg>
                 Total earnings this month
               </div>
@@ -336,12 +373,17 @@ export default function DashboardPage() {
           >
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
-              style={{ background: "linear-gradient(135deg, #f43f5e 0%, #fbbf24 100%)" }}
+              style={{
+                background: "linear-gradient(135deg, #f43f5e 0%, #fbbf24 100%)",
+              }}
             />
             <div className="relative">
               <motion.div
                 className="w-14 h-14 rounded-xl flex items-center justify-center mr-4 shadow-lg mb-4"
-                style={{ background: "linear-gradient(135deg, #f43f5e 0%, #fbbf24 100%)" }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f43f5e 0%, #fbbf24 100%)",
+                }}
                 variants={iconVariants}
                 initial="initial"
                 animate="animate"
@@ -350,11 +392,25 @@ export default function DashboardPage() {
               >
                 <IndianRupee className="w-7 h-7 text-white" strokeWidth={2.2} />
               </motion.div>
-              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">Monthly Expenses</span>
-              <p className="text-3xl font-bold mb-2 text-rose-600 dark:text-rose-400 mt-2">{formatCurrency(monthlyExpenses)}</p>
+              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                Monthly Expenses
+              </span>
+              <p className="text-3xl font-bold mb-2 text-rose-600 dark:text-rose-400 mt-2">
+                {formatCurrency(monthlyExpenses)}
+              </p>
               <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                  />
                 </svg>
                 Total spending this month
               </div>
@@ -363,7 +419,11 @@ export default function DashboardPage() {
 
           {/* Net Income Card */}
           <motion.div
-            className={`relative overflow-hidden rounded-2xl p-7 shadow-xl border backdrop-blur-md bg-white/70 dark:bg-slate-900/70 group cursor-pointer transition-all duration-500 ${netIncome >= 0 ? "border-sky-100 dark:border-sky-900" : "border-yellow-100 dark:border-yellow-900"}`}
+            className={`relative overflow-hidden rounded-2xl p-7 shadow-xl border backdrop-blur-md bg-white/70 dark:bg-slate-900/70 group cursor-pointer transition-all duration-500 ${
+              netIncome >= 0
+                ? "border-sky-100 dark:border-sky-900"
+                : "border-yellow-100 dark:border-yellow-900"
+            }`}
             initial="hidden"
             animate="visible"
             whileHover="hover"
@@ -372,12 +432,22 @@ export default function DashboardPage() {
           >
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"
-              style={{ background: netIncome >= 0 ? "linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%)" : "linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)" }}
+              style={{
+                background:
+                  netIncome >= 0
+                    ? "linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%)"
+                    : "linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)",
+              }}
             />
             <div className="relative">
               <motion.div
                 className="w-14 h-14 rounded-xl flex items-center justify-center mr-4 shadow-lg mb-4"
-                style={{ background: netIncome >= 0 ? "linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%)" : "linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)" }}
+                style={{
+                  background:
+                    netIncome >= 0
+                      ? "linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%)"
+                      : "linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)",
+                }}
                 variants={iconVariants}
                 initial="initial"
                 animate="animate"
@@ -386,12 +456,26 @@ export default function DashboardPage() {
               >
                 <IndianRupee className="w-7 h-7 text-white" strokeWidth={2.2} />
               </motion.div>
-              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">Net Income</span>
-              <p className={`text-3xl font-bold mb-2 mt-2 ${netIncome >= 0 ? "text-sky-600 dark:text-sky-400" : "text-yellow-600 dark:text-yellow-400"}`}>
-                {netIncome >= 0 ? "+" : ""}{formatCurrency(netIncome)}
+              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                Net Income
+              </span>
+              <p
+                className={`text-3xl font-bold mb-2 mt-2 ${
+                  netIncome >= 0
+                    ? "text-sky-600 dark:text-sky-400"
+                    : "text-yellow-600 dark:text-yellow-400"
+                }`}
+              >
+                {netIncome >= 0 ? "+" : ""}
+                {formatCurrency(netIncome)}
               </p>
               <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -467,7 +551,9 @@ export default function DashboardPage() {
                   </svg>
                   More Actions
                   <svg
-                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${showQuickActions ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                      showQuickActions ? "rotate-180" : ""
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -520,9 +606,7 @@ export default function DashboardPage() {
                       custom={0}
                       tabIndex={showQuickActions ? 0 : -1}
                     >
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-emerald-100 dark:bg-emerald-900"
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-emerald-100 dark:bg-emerald-900">
                         <svg
                           className="w-5 h-5 text-emerald-600 dark:text-emerald-300"
                           fill="none"
@@ -538,8 +622,12 @@ export default function DashboardPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-slate-100">View Transactions</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">See all your financial activity</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-100">
+                          View Transactions
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          See all your financial activity
+                        </p>
                       </div>
                     </motion.button>
 
@@ -556,9 +644,7 @@ export default function DashboardPage() {
                       custom={1}
                       tabIndex={showQuickActions ? 0 : -1}
                     >
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-emerald-100 dark:bg-emerald-900"
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-emerald-100 dark:bg-emerald-900">
                         <svg
                           className="w-5 h-5 text-emerald-600 dark:text-emerald-300"
                           fill="none"
@@ -574,8 +660,12 @@ export default function DashboardPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-slate-100">Manage Budgets</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Set and track spending limits</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-100">
+                          Manage Budgets
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Set and track spending limits
+                        </p>
                       </div>
                     </motion.button>
 
@@ -594,9 +684,7 @@ export default function DashboardPage() {
                       custom={2}
                       tabIndex={showQuickActions ? 0 : -1}
                     >
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-yellow-100 dark:bg-yellow-900"
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200 bg-yellow-100 dark:bg-yellow-900">
                         <svg
                           className="w-5 h-5 text-yellow-600 dark:text-yellow-400"
                           fill="none"
@@ -612,8 +700,12 @@ export default function DashboardPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-slate-100">Export Data</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Download your financial data</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-100">
+                          Export Data
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Download your financial data
+                        </p>
                       </div>
                     </motion.button>
                   </div>
@@ -653,62 +745,16 @@ export default function DashboardPage() {
 
         {/* Enhanced Add Transaction Form Modal */}
         {showExpenseForm && (
-          <div
-            className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowExpenseForm(false);
+          <ExpenseForm
+            asModal={true}
+            onSuccess={() => {
+              setShowExpenseForm(false);
+              if (user?.id) {
+                fetchTransactions(user.id); // Refresh data
               }
             }}
-          >
-            <div
-              className="rounded-2xl p-6 w-full max-w-md shadow-2xl border transform transition-all duration-300 scale-100 animate-in slide-in-from-bottom-4"
-              style={{
-                backgroundColor: "var(--card)",
-                borderColor: "var(--border)",
-                boxShadow: "var(--shadow-lg)",
-              }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2
-                  className="text-xl font-semibold"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  Add New Transaction
-                </h2>
-                <button
-                  onClick={() => setShowExpenseForm(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                  aria-label="Close modal"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    style={{ color: "var(--foreground-secondary)" }}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <ExpenseForm
-                onSuccess={() => {
-                  setShowExpenseForm(false);
-                  if (user?.id) {
-                    fetchTransactions(user.id); // Refresh data
-                  }
-                }}
-                onCancel={() => setShowExpenseForm(false)}
-              />
-            </div>
-          </div>
+            onCancel={() => setShowExpenseForm(false)}
+          />
         )}
 
         {/* Enhanced Financial Tips */}
@@ -728,10 +774,16 @@ export default function DashboardPage() {
             >
               <Lightbulb className="w-6 h-6 text-white drop-shadow" />
             </motion.div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-yellow-400 bg-clip-text text-transparent dark:from-yellow-300 dark:to-yellow-500">Financial Insight</h3>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-yellow-400 bg-clip-text text-transparent dark:from-yellow-300 dark:to-yellow-500">
+              Financial Insight
+            </h3>
           </div>
           <div
-            className={`p-5 rounded-xl border-2 mt-2 ${netIncome >= 0 ? "border-emerald-300 bg-emerald-50/80 dark:bg-emerald-900/30" : "border-yellow-300 bg-yellow-50/80 dark:bg-yellow-900/30"}`}
+            className={`p-5 rounded-xl border-2 mt-2 ${
+              netIncome >= 0
+                ? "border-emerald-300 bg-emerald-50/80 dark:bg-emerald-900/30"
+                : "border-yellow-300 bg-yellow-50/80 dark:bg-yellow-900/30"
+            }`}
           >
             <p className="leading-relaxed text-lg font-medium text-slate-700 dark:text-slate-200">
               {netIncome >= 0
