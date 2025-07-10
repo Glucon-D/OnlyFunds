@@ -89,7 +89,7 @@ const formContainerVariants = {
 
 // Category icons mapping
 const getCategoryIcon = (category: string) => {
-  const iconMap: Record<string, React.ComponentType<any>> = {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     // Expense categories
     food: Utensils,
     transportation: Car,

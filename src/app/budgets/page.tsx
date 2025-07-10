@@ -132,11 +132,13 @@ export default function BudgetsPage() {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (monthDropdownTimeoutRef.current) {
-        clearTimeout(monthDropdownTimeoutRef.current);
+      const monthTimeout = monthDropdownTimeoutRef.current;
+      const yearTimeout = yearDropdownTimeoutRef.current;
+      if (monthTimeout) {
+        clearTimeout(monthTimeout);
       }
-      if (yearDropdownTimeoutRef.current) {
-        clearTimeout(yearDropdownTimeoutRef.current);
+      if (yearTimeout) {
+        clearTimeout(yearTimeout);
       }
     };
   }, []);

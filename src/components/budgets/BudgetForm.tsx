@@ -27,7 +27,6 @@ import { Input } from "@/components/ui/Input";
 import { motion } from "framer-motion";
 import {
   BarChart3,
-  PiggyBank,
   X,
   IndianRupee,
   ChevronDown,
@@ -153,14 +152,17 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (categoryDropdownTimeoutRef.current) {
-        clearTimeout(categoryDropdownTimeoutRef.current);
+      const categoryTimeout = categoryDropdownTimeoutRef.current;
+      const monthTimeout = monthDropdownTimeoutRef.current;
+      const yearTimeout = yearDropdownTimeoutRef.current;
+      if (categoryTimeout) {
+        clearTimeout(categoryTimeout);
       }
-      if (monthDropdownTimeoutRef.current) {
-        clearTimeout(monthDropdownTimeoutRef.current);
+      if (monthTimeout) {
+        clearTimeout(monthTimeout);
       }
-      if (yearDropdownTimeoutRef.current) {
-        clearTimeout(yearDropdownTimeoutRef.current);
+      if (yearTimeout) {
+        clearTimeout(yearTimeout);
       }
     };
   }, []);
@@ -274,7 +276,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // Category icons mapping
   const getCategoryIcon = (category: string) => {
-    const iconMap: Record<string, React.ComponentType<any>> = {
+    const iconMap: Record<
+      string,
+      React.ComponentType<{ className?: string }>
+    > = {
       food: Utensils,
       transportation: Car,
       entertainment: Gamepad2,

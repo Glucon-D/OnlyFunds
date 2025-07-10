@@ -9,7 +9,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuthStore, useExpenseStore } from "@/lib/zustand";
 import {
@@ -26,21 +26,15 @@ import {
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownSeparator,
-} from "@/components/ui/Dropdown";
+import { Dropdown, DropdownSeparator } from "@/components/ui/Dropdown";
 import { ExpenseForm } from "@/components/expenses/ExpenseForm";
 import {
-  Receipt,
   Plus,
   Search,
   Filter,
   Calendar,
   TrendingUp,
   TrendingDown,
-  DollarSign,
   IndianRupee,
   Eye,
   Trash2,
@@ -50,7 +44,6 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronDown,
-  Check,
   X,
   SortDesc,
   SortAsc,
@@ -89,7 +82,10 @@ const dropdownItemVariants = {
 
 // Category icons mapping
 const getCategoryIcon = (category: string) => {
-  const iconMap: Record<string, React.ComponentType<any>> = {
+  const iconMap: Record<
+    string,
+    React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+  > = {
     // Expense categories
     food: Utensils,
     transportation: Car,
@@ -114,7 +110,13 @@ const getCategoryIcon = (category: string) => {
 const getDateRangeIcon = (dateRange: string) => {
   const iconMap: Record<
     string,
-    { icon: React.ComponentType<any>; color: string }
+    {
+      icon: React.ComponentType<{
+        className?: string;
+        style?: React.CSSProperties;
+      }>;
+      color: string;
+    }
   > = {
     all: { icon: Calendar, color: "#3b82f6" }, // blue-500
     today: { icon: Zap, color: "#eab308" }, // yellow-500
@@ -130,7 +132,13 @@ const getDateRangeIcon = (dateRange: string) => {
 const getSortIcon = (sortBy: string) => {
   const iconMap: Record<
     string,
-    { icon: React.ComponentType<any>; color: string }
+    {
+      icon: React.ComponentType<{
+        className?: string;
+        style?: React.CSSProperties;
+      }>;
+      color: string;
+    }
   > = {
     "date-desc": { icon: SortDesc, color: "#3b82f6" }, // blue-500
     "date-asc": { icon: SortAsc, color: "#3b82f6" }, // blue-500
@@ -1814,7 +1822,6 @@ export default function TransactionsPage() {
             ) : (
               <div className="space-y-4">
                 {filteredAndSortedTransactions.map((transaction) => {
-                  const isSelected = selectedTransactionId === transaction.id;
                   return (
                     <div
                       key={transaction.id}
